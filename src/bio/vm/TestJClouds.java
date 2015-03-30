@@ -30,21 +30,20 @@ public class TestJClouds {
 			String iptoSsh = null;
 			String keypairFilePath = "jclouds-keypair.pem";
 			String user = "ubuntu";
-			// String newServerId = jcloudsNova.launchInstance(newServerName,
-			// "ubuntu-14.04-server-cloudimg-amd64", "m1.small", keypair,
-			// "int_net");
-			// System.out.println("New Server ID: " + newServerId);
-			//
-			// // attach floating IP vao may ao
-			// String floatingIP = jcloudsNova.getOrCreateFloatingIP();
-			// System.out.println("Waiting for server booting....");
-			// if (jcloudsNova.attachIP(floatingIP, newServerName) == true) {
-			//
-			// System.out.println("New Server Floating IP:" + floatingIP);
-			// } else
-			// System.out.println("Cannot asscociate floating IP!");
-			//
-			// tao ssh dieu khien may ao
+			String newServerId = jcloudsNova.launchInstance(newServerName,
+					"ubuntu-14.04-server-cloudimg-amd64", "m1.small", keypair);
+			 System.out.println("New Server ID: " + newServerId);
+			
+			 // attach floating IP vao may ao
+			 String floatingIP = jcloudsNova.getOrCreateFloatingIP();
+			 System.out.println("Waiting for server booting....");
+			 if (jcloudsNova.attachIP(floatingIP, newServerName) == true) {
+			
+			 System.out.println("New Server Floating IP:" + floatingIP);
+			 } else
+			 System.out.println("Cannot asscociate floating IP!");
+			
+//			 tao ssh dieu khien may ao
 
 			iptoSsh = jcloudsNova.getFloatingIP(jcloudsNova
 					.getServerId(newServerName));
@@ -58,8 +57,6 @@ public class TestJClouds {
 						.user(user).privateKey(privateKey).build();
 				System.out.println(jcloudsNova.excuteCommand(iptoSsh,
 						loginCredentials, "curl www.google.com"));
-				System.out.println(jcloudsNova.excuteCommand("192.168.50.192",
-						"cirros", "cubswin:)", "pwd"));
 
 			}
 			jcloudsNova.close();

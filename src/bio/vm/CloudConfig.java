@@ -11,4 +11,5 @@ public interface CloudConfig {
 	public static final String UNDEFINED_IMAGE = "Image not found";
 	public static final String UNDEFINED_SERVER = "Server not found";
 	public static final String UNDEFINED_INT_NET = "Internal network not found";
+	public static final String ubuntuImage= "ubuntu-14.04-server-cloudimg-amd64";
 }

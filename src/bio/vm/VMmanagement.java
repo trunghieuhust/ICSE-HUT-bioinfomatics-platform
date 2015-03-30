@@ -75,9 +75,9 @@ public class VMmanagement implements Closeable {
 
 	}
 
-	public Status checkServerStatus(String serverName) {
+	public Status checkServerStatus(String serverID) {
 		ServerApi serverApi = novaApi.getServerApiForZone(this.defaultZone);
-		Server server = serverApi.get(this.getServerId(serverName));
+		Server server = serverApi.get(serverID);
 		return server.getStatus();
 	}
 
@@ -95,13 +95,25 @@ public class VMmanagement implements Closeable {
 
 	public String launchInstance(String name, String image, String flavor,
 			String keypairName) {
+		// TODO tao may ao, gan floatingIP, tra ve floating IP
 		CreateServerOptions options = CreateServerOptions.Builder.keyPairName(
 				keypairName).networks(
 				this.getNetworkId(CloudConfig.internalNetwork));
 		ServerApi serverApi = this.novaApi.getServerApiForZone(defaultZone);
 		ServerCreated ser = serverApi.create(name, this.getImageId(image),
 				this.getFlavorId(flavor), options);
-		return ser.getId();
+		String serverID = ser.getId();
+		String floatingIP = getOrCreateFloatingIP();
+		System.out.println("Waiting for server booting....");
+		if (attachIP(floatingIP, serverID) == true) {
+
+			System.out.println("New Server Floating IP:" + floatingIP);
+			return floatingIP;
+		} else {
+			System.out.println("Cannot asscociate floating IP!");
+			return null;
+		}
+
 	}
 
 	public String getFlavorId(String flavor) {
@@ -154,7 +166,7 @@ public class VMmanagement implements Closeable {
 		if (ip == null)
 			return false;
 		if (checkServerStatus(server) == Status.ACTIVE) {
-			floatingIPApi.addToServer(ip, this.getServerId(server));
+			floatingIPApi.addToServer(ip, server);
 			return true;
 		}
 		while (checkServerStatus(server) != Status.ACTIVE) {

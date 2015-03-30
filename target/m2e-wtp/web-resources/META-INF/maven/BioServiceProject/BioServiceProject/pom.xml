@@ -30,10 +30,11 @@
 		</plugins>
 	</build>
 	<dependencies>
+		<!-- jclouds dependencies -->
 		<dependency>
-			<groupId>org.jclouds.driver</groupId>
+			<groupId>org.apache.jclouds.driver</groupId>
 			<artifactId>jclouds-slf4j</artifactId>
-			<version>1.6.0</version>
+			<version>${jclouds.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.jclouds.driver</groupId>
@@ -45,7 +46,6 @@
 			<artifactId>jclouds-jsch</artifactId>
 			<version>${jclouds.version}</version>
 		</dependency>
-
 		<!-- jclouds OpenStack dependencies -->
 		<dependency>
 			<groupId>org.apache.jclouds.api</groupId>
@@ -86,6 +86,17 @@
 			<groupId>org.apache.jclouds.labs</groupId>
 			<artifactId>openstack-neutron</artifactId>
 			<version>${jclouds.version}</version>
+		</dependency>
+		<!-- 3rd party dependencies -->
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.0.13</version>
+		</dependency>
+		<dependency>
+			<groupId>mysql</groupId>
+			<artifactId>mysql-connector-java</artifactId>
+			<version>5.1.25</version>
 		</dependency>
 	</dependencies>
 </project>
