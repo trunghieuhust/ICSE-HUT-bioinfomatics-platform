@@ -11,8 +11,7 @@ import com.google.common.io.Files;
 public class TestJClouds {
 
 	public static void main(String[] args) throws IOException {
-		VMmanagement jcloudsNova = new VMmanagement("ducdmk55", "students",
-				"ducdmk55@123");
+		VMmanagement jcloudsNova = new VMmanagement();
 
 		try {// list servers
 			jcloudsNova.listServers();

@@ -43,29 +43,31 @@ public class VMmanagement implements Closeable {
 	private final ComputeServiceContext computeContext;
 	private final Set<String> zones;
 	private String defaultZone = null;
-	private String identity;
-	private String credential;
-	private String endpoint = "http://192.168.50.12:5000/v2.0/";
-	private String novaProvider = "openstack-nova";
-	private String neutronProvider = "openstack-neutron";
 
-	public VMmanagement(String username, String tenant, String credential) {
+	public VMmanagement() {
 		Iterable<Module> modules = ImmutableSet
 				.<Module> of(new SLF4JLoggingModule());
-
 		Iterable<Module> sshModules = ImmutableSet
 				.<Module> of(new JschSshClientModule());
-		identity = tenant + ":" + username;
-		this.credential = credential;
 
-		computeContext = ContextBuilder.newBuilder(novaProvider)
-				.endpoint(endpoint).credentials(identity, credential)
-				.modules(sshModules).buildView(ComputeServiceContext.class);
-		novaApi = ContextBuilder.newBuilder(novaProvider).endpoint(endpoint)
-				.credentials(identity, credential).buildApi(NovaApi.class);
-		neutronApi = ContextBuilder.newBuilder(neutronProvider)
-				.endpoint(endpoint).credentials(identity, credential)
-				.modules(modules).buildApi(NeutronApi.class);
+		computeContext = ContextBuilder
+				.newBuilder(CloudConfig.novaProvider)
+				.endpoint(CloudConfig.endpoint)
+				.credentials(CloudConfig.openstackIdentity,
+						CloudConfig.openstackCredentials).modules(sshModules)
+				.buildView(ComputeServiceContext.class);
+		novaApi = ContextBuilder
+				.newBuilder(CloudConfig.novaProvider)
+				.endpoint(CloudConfig.endpoint)
+				.credentials(CloudConfig.openstackIdentity,
+						CloudConfig.openstackCredentials)
+				.buildApi(NovaApi.class);
+		neutronApi = ContextBuilder
+				.newBuilder(CloudConfig.neutronProvider)
+				.endpoint(CloudConfig.endpoint)
+				.credentials(CloudConfig.openstackIdentity,
+						CloudConfig.openstackCredentials).modules(modules)
+				.buildApi(NeutronApi.class);
 		zones = novaApi.getConfiguredZones();
 		if (null == defaultZone) {
 			defaultZone = zones.iterator().next();
@@ -100,7 +102,7 @@ public class VMmanagement implements Closeable {
 				this.getFlavorId(flavor), options);
 		return ser.getId();
 	}
-	
+
 	public String getFlavorId(String flavor) {
 		FlavorApi flavorApi = this.novaApi
 				.getFlavorApiForZone(this.defaultZone);
