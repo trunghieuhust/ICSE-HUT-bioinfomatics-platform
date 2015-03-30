@@ -94,9 +94,10 @@ public class VMmanagement implements Closeable {
 	}
 
 	public String launchInstance(String name, String image, String flavor,
-			String keypairName, String network) {
+			String keypairName) {
 		CreateServerOptions options = CreateServerOptions.Builder.keyPairName(
-				keypairName).networks(this.getNetworkId(network));
+				keypairName).networks(
+				this.getNetworkId(CloudConfig.internalNetwork));
 		ServerApi serverApi = this.novaApi.getServerApiForZone(defaultZone);
 		ServerCreated ser = serverApi.create(name, this.getImageId(image),
 				this.getFlavorId(flavor), options);
