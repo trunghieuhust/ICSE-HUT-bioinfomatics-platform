@@ -37,7 +37,7 @@ import com.google.common.io.Closeables;
 import com.google.common.net.HostAndPort;
 import com.google.inject.Module;
 
-public class JCloudsNova implements Closeable {
+public class VMmanagement implements Closeable {
 	private final NovaApi novaApi;
 	private final NeutronApi neutronApi;
 	private final ComputeServiceContext computeContext;
@@ -49,7 +49,7 @@ public class JCloudsNova implements Closeable {
 	private String novaProvider = "openstack-nova";
 	private String neutronProvider = "openstack-neutron";
 
-	public JCloudsNova(String username, String tenant, String credential) {
+	public VMmanagement(String username, String tenant, String credential) {
 		Iterable<Module> modules = ImmutableSet
 				.<Module> of(new SLF4JLoggingModule());
 
@@ -100,7 +100,7 @@ public class JCloudsNova implements Closeable {
 				this.getFlavorId(flavor), options);
 		return ser.getId();
 	}
-
+	
 	public String getFlavorId(String flavor) {
 		FlavorApi flavorApi = this.novaApi
 				.getFlavorApiForZone(this.defaultZone);
