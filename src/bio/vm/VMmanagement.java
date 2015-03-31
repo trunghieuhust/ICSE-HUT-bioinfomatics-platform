@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.validator.routines.InetAddressValidator;
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.ExecResponse;
@@ -95,7 +96,7 @@ public class VMmanagement implements Closeable {
 
 	public String launchInstance(String name, String image, String flavor,
 			String keypairName) {
-		// TODO tao may ao, gan floatingIP, tra ve floating IP
+		int timeoutCounting = 0;
 		CreateServerOptions options = CreateServerOptions.Builder.keyPairName(
 				keypairName).networks(
 				this.getNetworkId(CloudConfig.internalNetwork));
@@ -105,15 +106,30 @@ public class VMmanagement implements Closeable {
 		String serverID = ser.getId();
 		String floatingIP = getOrCreateFloatingIP();
 		System.out.println("Waiting for server booting....");
-		if (attachIP(floatingIP, serverID) == true) {
 
-			System.out.println("New Server Floating IP:" + floatingIP);
-			return floatingIP;
-		} else {
-			System.out.println("Cannot asscociate floating IP!");
+		while (!attachIP(floatingIP, serverID)) {
+			if (timeoutCounting < 15) {
+				try {
+					Thread.sleep(10000);
+					timeoutCounting++;
+				} catch (InterruptedException e) {
+					System.out.println("Error when attaching floating IP");
+					return null;
+				}
+			} else {
+				System.out.println("Booting error");
+				return null;
+			}
+		}
+		System.out.println("Waiting for complete booting");
+		try {
+			Thread.sleep(20000);
+		} catch (InterruptedException e) {
+			System.out.println("Erorr occured");
 			return null;
 		}
-
+		System.out.println("Boot complete, ready to go!");
+		return floatingIP;
 	}
 
 	public String getFlavorId(String flavor) {
@@ -160,38 +176,16 @@ public class VMmanagement implements Closeable {
 	}
 
 	public boolean attachIP(String ip, String server) {
-		Integer timeoutCounting = 0;
 		FloatingIPApi floatingIPApi = this.novaApi
 				.getFloatingIPExtensionForZone(this.defaultZone).get();
-		if (ip == null)
+		if (!InetAddressValidator.getInstance().isValid(ip))
 			return false;
-		if (checkServerStatus(server) == Status.ACTIVE) {
+		else if (checkServerStatus(server) != Status.ACTIVE)
+			return false;
+		else {
 			floatingIPApi.addToServer(ip, server);
 			return true;
 		}
-		while (checkServerStatus(server) != Status.ACTIVE) {
-			if (timeoutCounting < 15) {
-				try {
-					Thread.sleep(10000);
-					timeoutCounting++;
-				} catch (InterruptedException e) {
-					System.out.println("Error when attaching floating IP");
-					return false;
-				}
-			} else {
-				System.out.println("Waiting Timeout!");
-				return false;
-			}
-		}
-		floatingIPApi.addToServer(ip, this.getServerId(server));
-		try {
-			System.out.println("attach successfull, wait for complete booting");
-			Thread.sleep(20000);
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		return true;
 	}
 
 	public String getServerId(String server) {
