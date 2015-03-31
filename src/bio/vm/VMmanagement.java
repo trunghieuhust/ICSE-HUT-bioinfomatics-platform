@@ -95,7 +95,6 @@ public class VMmanagement implements Closeable {
 
 	public String launchInstance(String name, String image, String flavor,
 			String keypairName) {
-		// TODO tao may ao, gan floatingIP, tra ve floating IP
 		CreateServerOptions options = CreateServerOptions.Builder.keyPairName(
 				keypairName).networks(
 				this.getNetworkId(CloudConfig.internalNetwork));
@@ -106,7 +105,6 @@ public class VMmanagement implements Closeable {
 		String floatingIP = getOrCreateFloatingIP();
 		System.out.println("Waiting for server booting....");
 		if (attachIP(floatingIP, serverID) == true) {
-
 			System.out.println("New Server Floating IP:" + floatingIP);
 			return floatingIP;
 		} else {
@@ -183,7 +181,15 @@ public class VMmanagement implements Closeable {
 				return false;
 			}
 		}
+		// TODO ping thu den may ao de xem da ssh dc hay chua
 		floatingIPApi.addToServer(ip, this.getServerId(server));
+		try {
+			System.out
+					.println("Attach successfully, wait for complete booting");
+			Thread.sleep(15000);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 		return true;
 	}
 
