@@ -26,34 +26,41 @@ public class JobManagement {
 	 * @return jobID
 	 */
 	public String createJob() {
-		Job newJob = new Job("");
 		UUID jobID = UUIDGenerator.nextUUID();
+		Job newJob = new Job(jobID.toString());
 		jobManager.put(jobID, newJob);
 		System.out.println("Job " + jobID.toString());
 		return jobID.toString();
 	}
 
 	public String getJobResult(String jobID) {
-		Job job = new Job();
+		Job job = null;
 		UUID uuid = UUIDGenerator.UUIDfromString(jobID);
 		if (jobManager.containsKey(uuid)) {
 			job = (Job) jobManager.get(uuid);
-		}
-		return job.getResult();
+			return job.getResult();
+		} else
+			return "Job not found";
 	}
 
 	public int getJobState(String jobID) {
 		Job job = null;
 		UUID uuid = UUIDGenerator.UUIDfromString(jobID);
-		System.out
-				.println(this.instance.getClass().getName() + uuid.toString());
 		if (jobManager.containsKey(uuid)) {
 			job = (Job) jobManager.get(uuid);
-			System.out.println(this.instance.getClass().getName()
-					+ job.getState());
 			return job.getState();
 		} else {
 			return -1;
 		}
+	}
+
+	public Job getJob(String jobID) {
+		Job job = null;
+		UUID uuid = UUIDGenerator.UUIDfromString(jobID);
+		if (jobManager.containsKey(uuid)) {
+			job = (Job) jobManager.get(uuid);
+		}
+		return job;
+
 	}
 }

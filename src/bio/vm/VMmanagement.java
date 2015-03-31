@@ -184,6 +184,13 @@ public class VMmanagement implements Closeable {
 			}
 		}
 		floatingIPApi.addToServer(ip, this.getServerId(server));
+		try {
+			System.out.println("attach successfull, wait for complete booting");
+			Thread.sleep(20000);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return true;
 	}
 
@@ -235,6 +242,7 @@ public class VMmanagement implements Closeable {
 			sshClient.disconnect();
 			return respond.getOutput();
 		} catch (Exception e) {
+			e.printStackTrace();
 			return ("Authentication Fail!");
 		}
 	}
