@@ -184,9 +184,8 @@ public class VMmanagement implements Closeable {
 		// TODO ping thu den may ao de xem da ssh dc hay chua
 		floatingIPApi.addToServer(ip, this.getServerId(server));
 		try {
-			System.out
-					.println("Attach successfully, wait for complete booting");
-			Thread.sleep(15000);
+			System.out.println("attach successfull, wait for complete booting");
+			Thread.sleep(20000);
 		} catch (InterruptedException e) {
 			e.printStackTrace();
 		}

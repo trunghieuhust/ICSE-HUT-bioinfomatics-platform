@@ -1,29 +1,56 @@
 package bio.service;
 
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+
+import org.jclouds.domain.LoginCredentials;
+
+import com.google.common.io.Files;
+
+import bio.vm.VMmanagement;
 
 public class Job {
 	private JobResult result;
+	private VMmanagement vm;
 
-	public Job() {
-	}
-
-	public Job(String job) {
+	public Job(final String jobID) {
 		result = new JobResult();
+		vm = new VMmanagement();
+
 		Thread thread = new Thread(new Runnable() {
 
 			@Override
 			public void run() {
 				String output = "";
 				result.updateState(JobState.JOB_STILL_BEING_PROCESSED);
-				output = excuteCommand("ping -c 20 google.com");
-				result.updateState(JobState.JOB_COMPLETE_SUCCESSFULLY);
-				result.setResult(output);
+				String serverIP = vm.launchInstance(jobID,
+						"ubuntu-14.04-server-cloudimg-amd64", "m1.small",
+						"jclouds-keypair");
+
+				String privateKey = null;
+				try {
+					privateKey = Files
+							.toString(
+									new File(
+											"/home/hieu/bio/workspace/BioServiceProject/jclouds-keypair.pem"),
+									StandardCharsets.UTF_8);
+					LoginCredentials loginCredentials = new LoginCredentials.Builder()
+							.user("ubuntu").privateKey(privateKey).build();
+					result.setResult(vm.excuteCommand(serverIP,
+							loginCredentials, "curl www.google.com"));
+					System.out.println(result.getResult());
+					result.updateState(JobState.JOB_COMPLETE_SUCCESSFULLY);
+					result.setResult(output);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
 			}
 		});
 		thread.start();
-		result.updateState(JobState.JOB_STILL_BEING_PROCESSED);
 		System.out.println("thread run.");
 	}
 
@@ -59,6 +86,10 @@ public class Job {
 	public int getState() {
 		System.out.println(result.toString());
 		return result.getStateCode();
+	}
+
+	public String getStateDescription() {
+		return result.getStateDescription();
 	}
 
 	public String getResult() {
