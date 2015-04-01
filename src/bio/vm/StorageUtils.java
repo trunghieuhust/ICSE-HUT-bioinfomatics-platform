@@ -1,8 +1,10 @@
 package bio.vm;
+
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.Closeables;
 import com.google.inject.Module;
+
 import org.jclouds.ContextBuilder;
 import org.jclouds.io.Payload;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
@@ -23,23 +25,25 @@ import static org.jclouds.io.Payloads.newByteSourcePayload;
 public class StorageUtils implements Closeable {
 	public static final String CONTAINER_NAME = "jclouds-example";
 	public static final String OBJECT_NAME = "jclouds-keypair.pem";
+	private final Set<String> zones;
+	private String defaultZone = null;
 
 	private SwiftApi swiftApi;
 
-	// public static void main(String[] args) throws IOException {
-	// UserUtils jcloudsSwift = new UserUtils();
-	//
-	// try {
-	// jcloudsSwift.createContainer();
-	// jcloudsSwift.uploadObjectFromString();
-	// jcloudsSwift.listContainers();
-	// jcloudsSwift.close();
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// } finally {
-	// jcloudsSwift.close();
-	// }
-	// }
+	public static void main(String[] args) throws IOException {
+		StorageUtils jcloudsSwift = new StorageUtils();
+
+		try {
+			jcloudsSwift.createContainer();
+			jcloudsSwift.uploadObjectFromString();
+			jcloudsSwift.listContainers();
+			jcloudsSwift.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		} finally {
+			jcloudsSwift.close();
+		}
+	}
 
 	public StorageUtils() {
 		Iterable<Module> modules = ImmutableSet
@@ -51,12 +55,16 @@ public class StorageUtils implements Closeable {
 				.credentials(CloudConfig.openstackIdentity,
 						CloudConfig.openstackCredentials).modules(modules)
 				.buildApi(SwiftApi.class);
+		zones = swiftApi.getConfiguredRegions();
+		if (null == defaultZone) {
+			defaultZone = zones.iterator().next();
+		}
 	}
 
 	public void createContainer() {
 		System.out.println("Create Container");
 
-		ContainerApi containerApi = swiftApi.getContainerApi("RegionOne");
+		ContainerApi containerApi = swiftApi.getContainerApi(this.defaultZone);
 		CreateContainerOptions options = CreateContainerOptions.Builder
 				.metadata(ImmutableMap.of("key1", "value1", "key2", "value2"));
 

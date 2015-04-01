@@ -132,6 +132,27 @@ public class VMmanagement implements Closeable {
 		return floatingIP;
 	}
 
+	public void terminateInstancebyName(String serverName) {
+		try {
+			String serverId;
+			serverId = getServerId(serverName);
+			terminateInstancebyId(serverId);
+		} catch (NullPointerException e) {
+			System.out.println("Server not found!");
+		}
+
+	}
+
+	public void terminateInstancebyId(String id) {
+		ServerApi serverApi = this.novaApi
+				.getServerApiForZone(this.defaultZone);
+		try {
+			serverApi.delete(id);
+		} catch (NullPointerException e) {
+			System.out.println("Invalid Server ID");
+		}
+	}
+
 	public String getFlavorId(String flavor) {
 		FlavorApi flavorApi = this.novaApi
 				.getFlavorApiForZone(this.defaultZone);
