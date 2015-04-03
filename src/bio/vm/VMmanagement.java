@@ -1,5 +1,6 @@
 package bio.vm;
 
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
@@ -132,27 +133,6 @@ public class VMmanagement implements Closeable {
 		return floatingIP;
 	}
 
-	public void terminateInstancebyName(String serverName) {
-		try {
-			String serverId;
-			serverId = getServerId(serverName);
-			terminateInstancebyId(serverId);
-		} catch (NullPointerException e) {
-			System.out.println("Server not found!");
-		}
-
-	}
-
-	public void terminateInstancebyId(String id) {
-		ServerApi serverApi = this.novaApi
-				.getServerApiForZone(this.defaultZone);
-		try {
-			serverApi.delete(id);
-		} catch (NullPointerException e) {
-			System.out.println("Invalid Server ID");
-		}
-	}
-
 	public String getFlavorId(String flavor) {
 		FlavorApi flavorApi = this.novaApi
 				.getFlavorApiForZone(this.defaultZone);
@@ -244,7 +224,7 @@ public class VMmanagement implements Closeable {
 		}
 	}
 
-	public String excuteCommand(String server,
+	public String executeCommand(String server,
 			LoginCredentials loginCredentials, String cmd) {
 		HostAndPort targetServer = HostAndPort.fromParts(server, 22);
 
@@ -266,7 +246,7 @@ public class VMmanagement implements Closeable {
 			String cmd) {
 		LoginCredentials loginCredentials = new LoginCredentials.Builder()
 				.user(user).password(password).build();
-		return excuteCommand(server, loginCredentials, cmd);
+		return executeCommand(server, loginCredentials, cmd);
 	}
 
 	public String getFloatingIP(String serverId) {
@@ -291,6 +271,14 @@ public class VMmanagement implements Closeable {
 			}
 		}
 		return address;
+	}
+	public void runInitScript(String serverName,
+			LoginCredentials loginCredentials) {
+		String serverIP = getFloatingIP(this.getServerId(serverName));
+		System.out.println(executeCommand(serverIP, loginCredentials, "wget "
+				+ CloudConfig.initScriptLink));;
+		System.out.println(executeCommand(serverIP, loginCredentials,
+				"sh cloudfuse-config.sh"));
 	}
 
 	public void close() throws IOException {

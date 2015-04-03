@@ -55,7 +55,7 @@ public class TestJClouds {
 						StandardCharsets.UTF_8);
 				LoginCredentials loginCredentials = new LoginCredentials.Builder()
 						.user(user).privateKey(privateKey).build();
-				System.out.println(jcloudsNova.excuteCommand(iptoSsh,
+				System.out.println(jcloudsNova.executeCommand(iptoSsh,
 						loginCredentials, "curl www.google.com"));
 
 			}
