@@ -39,7 +39,7 @@ public class Job {
 									StandardCharsets.UTF_8);
 					LoginCredentials loginCredentials = new LoginCredentials.Builder()
 							.user("ubuntu").privateKey(privateKey).build();
-					result.setResult(vm.excuteCommand(serverIP,
+					result.setResult(vm.executeCommand(serverIP,
 							loginCredentials, "curl www.google.com"));
 					System.out.println(result.getResult());
 					result.updateState(JobState.JOB_COMPLETE_SUCCESSFULLY);
