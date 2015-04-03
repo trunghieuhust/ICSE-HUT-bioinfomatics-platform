@@ -1,6 +1,5 @@
 package bio.vm;
 
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
@@ -131,6 +130,16 @@ public class VMmanagement implements Closeable {
 		}
 		System.out.println("Boot complete, ready to go!");
 		return floatingIP;
+	}
+
+	public void terminateInstancebyName(String serverName) {
+		terminateInstancebyId(getServerId(serverName));
+	}
+
+	public void terminateInstancebyId(String id) {
+		ServerApi serverApi = this.novaApi
+				.getServerApiForZone(this.defaultZone);
+		serverApi.delete(id);
 	}
 
 	public String getFlavorId(String flavor) {
@@ -272,11 +281,13 @@ public class VMmanagement implements Closeable {
 		}
 		return address;
 	}
+
 	public void runInitScript(String serverName,
 			LoginCredentials loginCredentials) {
 		String serverIP = getFloatingIP(this.getServerId(serverName));
 		System.out.println(executeCommand(serverIP, loginCredentials, "wget "
-				+ CloudConfig.initScriptLink));;
+				+ CloudConfig.initScriptLink));
+		;
 		System.out.println(executeCommand(serverIP, loginCredentials,
 				"sh cloudfuse-config.sh"));
 	}
