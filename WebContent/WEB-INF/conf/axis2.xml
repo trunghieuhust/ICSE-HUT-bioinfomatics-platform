@@ -220,6 +220,13 @@
         <!-- <parameter name="threadKeepAliveTimeUnit">MILLISECONDS</parameter>            -->
     </transportReceiver>
 
+	<transportReceiver name="http" class="org.apache.axis2.transport.http.AxisServletListener">
+    <parameter name="port">8080</parameter>
+	</transportReceiver>
+	<transportReceiver name="https" class="org.apache.axis2.transport.http.AxisServletListener">
+    <parameter name="port">8443</parameter>
+	</transportReceiver>
+	
     <!-- This is where you'd put custom transports.  See the transports project -->
     <!-- for more.  http://ws.apache.org/commons/transport                      -->
 

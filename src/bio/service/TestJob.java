@@ -1,5 +1,6 @@
 package bio.service;
 
+
 public class TestJob {
 
 	public String submitJob(String tool, String[] data) {
@@ -15,11 +16,16 @@ public class TestJob {
 	}
 
 	public String[] getResult(String jobID) {
-		String[] result = { "", "", "" };
-		result[0] = getStatus(jobID) + "";
-		result[1] = JobManagement.getInstance().getJob(jobID)
-				.getStateDescription();
-		result[2] = JobManagement.getInstance().getJobResult(jobID);
+		 String[] result = { "", "", "" };
+		 result[0] = getStatus(jobID) + "";
+		 result[1] = JobManagement.getInstance().getJob(jobID)
+		 .getStateDescription();
+		 result[2] = JobManagement.getInstance().getJobResult(jobID);
+//		Result res = new Result();
+//		res.Status = getStatus(jobID) + "";
+//		res.Description = JobManagement.getInstance().getJob(jobID)
+//				.getStateDescription();
+//		res.Result = JobManagement.getInstance().getJobResult(jobID);
 
 		return result;
 	}

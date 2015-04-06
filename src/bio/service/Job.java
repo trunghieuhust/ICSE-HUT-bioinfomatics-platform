@@ -31,7 +31,7 @@ public class Job {
 						"jclouds-keypair");
 
 				String privateKey = null;
-				try {
+				try { 
 					privateKey = Files
 							.toString(
 									new File(
@@ -44,6 +44,9 @@ public class Job {
 					System.out.println(result.getResult());
 					result.updateState(JobState.JOB_COMPLETE_SUCCESSFULLY);
 					result.setResult(output);
+					System.out.println("Done. Terminating VM...");
+					vm.terminateInstancebyName(jobID);
+					System.out.println("VM terminated.");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
