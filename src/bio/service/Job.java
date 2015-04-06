@@ -43,7 +43,7 @@ public class Job {
 							loginCredentials, "curl www.google.com"));
 					System.out.println(result.getResult());
 					result.updateState(JobState.JOB_COMPLETE_SUCCESSFULLY);
-					result.setResult(output);
+					//result.setResult(output);
 					System.out.println("Done. Terminating VM...");
 					vm.terminateInstancebyName(jobID);
 					System.out.println("VM terminated.");

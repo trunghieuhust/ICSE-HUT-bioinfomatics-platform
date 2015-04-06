@@ -1,24 +1,26 @@
-package bio.vm;
+package bio.service;
 
 import java.util.NoSuchElementException;
 
 import org.jclouds.ContextBuilder;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.openstack.keystone.v2_0.KeystoneApi;
-import org.jclouds.openstack.keystone.v2_0.domain.User;
 import org.jclouds.openstack.keystone.v2_0.features.TenantApi;
 import org.jclouds.openstack.keystone.v2_0.features.UserApi;
 import org.jclouds.rest.AuthorizationException;
+import bio.service.User;
+import bio.vm.CloudConfig;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Module;
 
-public class UserUtils {
-	private KeystoneApi keystoneApi;
-	private static UserUtils instance;
+public class UserManagement {
 
-	public UserUtils() {
+	private KeystoneApi keystoneApi;
+	private static UserManagement instance;
+
+	public UserManagement() {
 		Iterable<Module> modules = ImmutableSet
 				.<Module> of(new SLF4JLoggingModule());
 		keystoneApi = ContextBuilder
@@ -27,15 +29,21 @@ public class UserUtils {
 				.credentials(CloudConfig.openstackIdentity,
 						CloudConfig.openstackCredentials).modules(modules)
 				.buildApi(KeystoneApi.class);
-
 	}
 
-	public boolean isUserExist(String username, String password) {
+	/**
+	 * @param username
+	 * @param password
+	 * @return User object if authentication successful, null if failed.
+	 * 
+	 */
+	public User login(String username, String password) {
 		Optional<? extends UserApi> userApis = keystoneApi.getUserApi();
 		Optional<? extends TenantApi> tenantApis = keystoneApi.getTenantApi();
 		if (userApis.isPresent() && tenantApis.isPresent()) {
 			UserApi userApi = userApis.get();
-			User user = userApi.getByName(username);
+			org.jclouds.openstack.keystone.v2_0.domain.User user = userApi
+					.getByName(username);
 
 			if (user != null) {
 				TenantApi tenantApi = tenantApis.get();
@@ -49,29 +57,30 @@ public class UserUtils {
 							.credentials(userIdentity, password)
 							.buildApi(KeystoneApi.class);
 					if (userKeystoneApi.getExtensionApi().list().isEmpty()) {
-						return true;
+						return new User(username, password, "keypair");
 					} else
-						return true;
+						return new User(username, password, "keypair");
 				} catch (NoSuchElementException e) {
 					System.out.println("User exist but password is null!");
-					return false;
+					return null;
 				} catch (AuthorizationException e1) {
 					System.out.println("Wrong password!");
-					return false;
+					return null;
 				}
 			} else
 				System.out.println("User does not exist!");
-			return false;
+			return null;
 		} else
-			return false;
+			return null;
 	}
 
-	public static UserUtils getInstance() {
+	public static UserManagement getInstance() {
 		if (instance == null) {
-			instance = new UserUtils();
+			instance = new UserManagement();
 			return instance;
 		} else {
 			return instance;
 		}
 	}
+
 }
