@@ -1,22 +1,13 @@
 package bio.vm;
-
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 import org.apache.commons.validator.routines.InetAddressValidator;
-import org.jclouds.ContextBuilder;
-import org.jclouds.compute.ComputeServiceContext;
-import org.jclouds.compute.domain.ExecResponse;
-import org.jclouds.domain.LoginCredentials;
-import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
-import org.jclouds.openstack.neutron.v2.NeutronApi;
 import org.jclouds.openstack.neutron.v2.domain.Network;
 import org.jclouds.openstack.neutron.v2.features.NetworkApi;
-import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.openstack.nova.v2_0.domain.Address;
 import org.jclouds.openstack.nova.v2_0.domain.Flavor;
 import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
@@ -30,61 +21,30 @@ import org.jclouds.openstack.nova.v2_0.features.ImageApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
 import org.jclouds.openstack.v2_0.domain.Resource;
-import org.jclouds.ssh.SshClient;
-import org.jclouds.ssh.jsch.config.JschSshClientModule;
 
-import com.google.common.collect.ImmutableSet;
+import bio.service.User;
+
 import com.google.common.io.Closeables;
-import com.google.common.net.HostAndPort;
-import com.google.inject.Module;
 
 public class VMmanagement implements Closeable {
-	private final NovaApi novaApi;
-	private final NeutronApi neutronApi;
-	private final ComputeServiceContext computeContext;
-	private final Set<String> zones;
-	private String defaultZone = null;
+	private final Context context;
+	private User user;
 
-	public VMmanagement() {
-		Iterable<Module> modules = ImmutableSet
-				.<Module> of(new SLF4JLoggingModule());
-		Iterable<Module> sshModules = ImmutableSet
-				.<Module> of(new JschSshClientModule());
-
-		computeContext = ContextBuilder
-				.newBuilder(CloudConfig.novaProvider)
-				.endpoint(CloudConfig.endpoint)
-				.credentials(CloudConfig.openstackIdentity,
-						CloudConfig.openstackCredentials).modules(sshModules)
-				.buildView(ComputeServiceContext.class);
-		novaApi = ContextBuilder
-				.newBuilder(CloudConfig.novaProvider)
-				.endpoint(CloudConfig.endpoint)
-				.credentials(CloudConfig.openstackIdentity,
-						CloudConfig.openstackCredentials)
-				.buildApi(NovaApi.class);
-		neutronApi = ContextBuilder
-				.newBuilder(CloudConfig.neutronProvider)
-				.endpoint(CloudConfig.endpoint)
-				.credentials(CloudConfig.openstackIdentity,
-						CloudConfig.openstackCredentials).modules(modules)
-				.buildApi(NeutronApi.class);
-		zones = novaApi.getConfiguredZones();
-		if (null == defaultZone) {
-			defaultZone = zones.iterator().next();
-		}
-
+	public VMmanagement(User user) {
+		this.user = user;
+		context = new Context(user);
 	}
 
 	public Status checkServerStatus(String serverID) {
-		ServerApi serverApi = novaApi.getServerApiForZone(this.defaultZone);
+		ServerApi serverApi = context.novaApi
+				.getServerApiForZone(context.defaultZone);
 		Server server = serverApi.get(serverID);
 		return server.getStatus();
 	}
 
 	public void listServers() {
-		for (String zone : zones) {
-			ServerApi serverApi = novaApi.getServerApiForZone(zone);
+		for (String zone : context.zones) {
+			ServerApi serverApi = context.novaApi.getServerApiForZone(zone);
 
 			System.out.println("Servers in " + zone);
 
@@ -94,13 +54,14 @@ public class VMmanagement implements Closeable {
 		}
 	}
 
-	public String launchInstance(String name, String image, String flavor,
-			String keypairName) {
+	public VM launchInstance(String name, String image, String flavor) {
 		int timeoutCounting = 0;
+		String keypairName = user.getUsername();
 		CreateServerOptions options = CreateServerOptions.Builder.keyPairName(
 				keypairName).networks(
 				this.getNetworkId(CloudConfig.internalNetwork));
-		ServerApi serverApi = this.novaApi.getServerApiForZone(defaultZone);
+		ServerApi serverApi = context.novaApi
+				.getServerApiForZone(context.defaultZone);
 		ServerCreated ser = serverApi.create(name, this.getImageId(image),
 				this.getFlavorId(flavor), options);
 		String serverID = ser.getId();
@@ -110,7 +71,7 @@ public class VMmanagement implements Closeable {
 		while (!attachIP(floatingIP, serverID)) {
 			if (timeoutCounting < 15) {
 				try {
-					Thread.sleep(10000);
+					Thread.sleep(3000);
 					timeoutCounting++;
 				} catch (InterruptedException e) {
 					System.out.println("Error when attaching floating IP");
@@ -125,11 +86,12 @@ public class VMmanagement implements Closeable {
 		try {
 			Thread.sleep(20000);
 		} catch (InterruptedException e) {
-			System.out.println("Erorr occured");
+			System.out.println("Error occured");
 			return null;
 		}
 		System.out.println("Boot complete, ready to go!");
-		return floatingIP;
+		VM vm = new VM(this.context, name, serverID, floatingIP);
+		return vm;
 	}
 
 	public void terminateInstancebyName(String serverName) {
@@ -137,14 +99,14 @@ public class VMmanagement implements Closeable {
 	}
 
 	public void terminateInstancebyId(String id) {
-		ServerApi serverApi = this.novaApi
-				.getServerApiForZone(this.defaultZone);
+		ServerApi serverApi = context.novaApi
+				.getServerApiForZone(context.defaultZone);
 		serverApi.delete(id);
 	}
 
 	public String getFlavorId(String flavor) {
-		FlavorApi flavorApi = this.novaApi
-				.getFlavorApiForZone(this.defaultZone);
+		FlavorApi flavorApi = context.novaApi
+				.getFlavorApiForZone(context.defaultZone);
 		try {
 			Flavor flavorObj = flavorApi.get(flavor);
 			return flavorObj.getId();
@@ -158,7 +120,8 @@ public class VMmanagement implements Closeable {
 	}
 
 	public String getImageId(String image) {
-		ImageApi imageApi = this.novaApi.getImageApiForZone(this.defaultZone);
+		ImageApi imageApi = context.novaApi
+				.getImageApiForZone(context.defaultZone);
 		try {
 			Image imageObj = imageApi.get(image);
 			return imageObj.getId();
@@ -172,7 +135,8 @@ public class VMmanagement implements Closeable {
 	}
 
 	public String getNetworkId(String network) {
-		NetworkApi networkApi = this.neutronApi.getNetworkApi(this.defaultZone);
+		NetworkApi networkApi = context.neutronApi
+				.getNetworkApi(context.defaultZone);
 		try {
 			Network networkObj = networkApi.get(network);
 			return networkObj.getId();
@@ -186,8 +150,8 @@ public class VMmanagement implements Closeable {
 	}
 
 	public boolean attachIP(String ip, String server) {
-		FloatingIPApi floatingIPApi = this.novaApi
-				.getFloatingIPExtensionForZone(this.defaultZone).get();
+		FloatingIPApi floatingIPApi = context.novaApi
+				.getFloatingIPExtensionForZone(context.defaultZone).get();
 		if (!InetAddressValidator.getInstance().isValid(ip))
 			return false;
 		else if (checkServerStatus(server) != Status.ACTIVE)
@@ -199,7 +163,8 @@ public class VMmanagement implements Closeable {
 	}
 
 	public String getServerId(String server) {
-		ServerApi serverApi = this.novaApi.getServerApiForZone(defaultZone);
+		ServerApi serverApi = context.novaApi
+				.getServerApiForZone(context.defaultZone);
 		try {
 			Server serverObj = serverApi.get(server);
 			return serverObj.getId();
@@ -214,8 +179,8 @@ public class VMmanagement implements Closeable {
 
 	public String getOrCreateFloatingIP() {
 		List<FloatingIP> freeIP = new LinkedList<FloatingIP>();
-		FloatingIPApi floatingIPApi = this.novaApi
-				.getFloatingIPExtensionForZone(this.defaultZone).get();
+		FloatingIPApi floatingIPApi = context.novaApi
+				.getFloatingIPExtensionForZone(context.defaultZone).get();
 		Iterator<? extends FloatingIP> floatingIP = floatingIPApi.list()
 				.iterator();
 		while (floatingIP.hasNext()) {
@@ -227,39 +192,14 @@ public class VMmanagement implements Closeable {
 		if (freeIP.size() > 0) {
 			return freeIP.get(0).getIp();
 		} else {
-			// return floatingIPApi.create().getIp();
 			return floatingIPApi.allocateFromPool(this.getNetworkId("ext_net"))
 					.getIp();
 		}
 	}
 
-	public String executeCommand(String server,
-			LoginCredentials loginCredentials, String cmd) {
-		HostAndPort targetServer = HostAndPort.fromParts(server, 22);
-
-		try {
-			SshClient sshClient = this.computeContext.utils()
-					.getSshClientFactory()
-					.create(targetServer, loginCredentials);
-			sshClient.connect();
-			ExecResponse respond = sshClient.exec(cmd);
-			sshClient.disconnect();
-			return respond.getOutput();
-		} catch (Exception e) {
-			e.printStackTrace();
-			return ("Authentication Fail!");
-		}
-	}
-
-	public String excuteCommand(String server, String user, String password,
-			String cmd) {
-		LoginCredentials loginCredentials = new LoginCredentials.Builder()
-				.user(user).password(password).build();
-		return executeCommand(server, loginCredentials, cmd);
-	}
-
 	public String getFloatingIP(String serverId) {
-		ServerApi serverApi = this.novaApi.getServerApiForZone(defaultZone);
+		ServerApi serverApi = context.novaApi
+				.getServerApiForZone(context.defaultZone);
 		String address = null;
 		try {
 			Server serverObj = serverApi.get(serverId);
@@ -282,17 +222,8 @@ public class VMmanagement implements Closeable {
 		return address;
 	}
 
-	public void runInitScript(String serverName,
-			LoginCredentials loginCredentials) {
-		String serverIP = getFloatingIP(this.getServerId(serverName));
-		System.out.println(executeCommand(serverIP, loginCredentials, "wget "
-				+ CloudConfig.initScriptLink));
-		;
-		System.out.println(executeCommand(serverIP, loginCredentials,
-				"sh cloudfuse-config.sh"));
+	public void close() throws IOException {
+		Closeables.close(context.novaApi, true);
 	}
 
-	public void close() throws IOException {
-		Closeables.close(novaApi, true);
-	}
 }
