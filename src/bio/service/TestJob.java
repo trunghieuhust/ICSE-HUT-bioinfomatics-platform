@@ -2,8 +2,6 @@ package bio.service;
 
 import java.util.HashMap;
 
-import bio.vm.UserUtils;
-
 public class TestJob {
 
 	public String submitJob(String tool, String[] data, String username,
