@@ -25,9 +25,9 @@ public class JobManagement {
 	/**
 	 * @return jobID
 	 */
-	public String createJob() {
+	public String createJob(User user) {
 		UUID jobID = UUIDGenerator.nextUUID();
-		Job newJob = new Job(jobID.toString());
+		Job newJob = new Job(jobID.toString(), user);
 		jobManager.put(jobID, newJob);
 		System.out.println("Job " + jobID.toString());
 		return jobID.toString();

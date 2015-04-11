@@ -29,7 +29,7 @@ import com.google.common.io.Closeables;
 import com.google.common.io.Files;
 import com.google.inject.Module;
 
-public class StorageUtils implements Closeable {
+public class StorageManagement implements Closeable {
 	private final Set<String> zones;
 	private String defaultZone = null;
 	public static final String CONTAINER_NAME = "jclouds-example";
@@ -40,7 +40,7 @@ public class StorageUtils implements Closeable {
 	public static void main(String[] args) throws IOException {
 		String CONTAINER_NAME = "keypair";
 		String OBJECT_NAME = "ducdmk55.pem";
-		StorageUtils jcloudsSwift = new StorageUtils(new User("ducdmk55",
+		StorageManagement jcloudsSwift = new StorageManagement(new User("ducdmk55",
 				"ducdmk55@123"));
 		String privatekey;
 		try {
@@ -62,7 +62,7 @@ public class StorageUtils implements Closeable {
 		}
 	}
 
-	public StorageUtils(User user) {
+	public StorageManagement(User user) {
 		// this.user = user;
 		Iterable<Module> modules = ImmutableSet
 				.<Module> of(new SLF4JLoggingModule());

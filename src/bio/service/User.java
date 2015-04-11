@@ -3,7 +3,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 import bio.vm.CloudConfig;
-import bio.vm.StorageUtils;
+import bio.vm.StorageManagement;
 import bio.vm.VMmanagement;
 
 import com.google.common.io.Files;
@@ -13,7 +13,7 @@ public class User {
 	private String password;
 	private String keypair;
 	private String userID;
-	private StorageUtils storage;
+	private StorageManagement storage;
 	private VMmanagement manager;
 	private String userIdentity;
 
@@ -22,7 +22,7 @@ public class User {
 		this.password = password;
 		this.userIdentity = CloudConfig.bioServiceTenantName + ":"
 				+ this.username;
-		this.storage = new StorageUtils(this);
+		this.storage = new StorageManagement(this);
 		this.setKeypair();
 		this.manager = new VMmanagement(this);
 	}
@@ -74,7 +74,7 @@ public class User {
 		return manager;
 	}
 
-	public StorageUtils getStorageUtils() {
+	public StorageManagement getStorageUtils() {
 		return storage;
 	}
 }

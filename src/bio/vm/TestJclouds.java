@@ -10,7 +10,7 @@ public class TestJclouds {
 		User user = UserManagement.getInstance().login("ducdmk55",
 				"ducdmk55@123");
 		VMmanagement manager = user.getManager();
-		StorageUtils storage = user.getStorageUtils();
+		StorageManagement storage = user.getStorageUtils();
 
 		manager.listServers();
 		VM vm = manager.launchInstance("Ubuntu", CloudConfig.ubuntuImage,

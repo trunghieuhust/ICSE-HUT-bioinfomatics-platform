@@ -1,18 +1,16 @@
 package bio.service;
 
-import java.util.HashMap;
-
 public class TestJob {
 
 	public String submitJob(String tool, String[] data, String username,
 			String password) {
-		if (UserUtils.getInstance().isUserExist(username, password)) {
-			String jobID = "";
-
-			jobID = HandlerRequest.getInstance().submit(tool, data);
-			return jobID;
-		} else {
+		String jobID = "";
+		User user = UserManagement.getInstance().login(username, password);
+		if (user == null)
 			return "Invalid user name or password.";
+		else {
+			jobID = HandlerRequest.getInstance().submit(user, tool, data);
+			return jobID;
 		}
 	}
 
@@ -21,8 +19,7 @@ public class TestJob {
 		return JobManagement.getInstance().getJobState(jobID);
 	}
 
-	public String[] getResult(String jobID, String username,
-			String password) {
+	public String[] getResult(String jobID, String username, String password) {
 		String[] result = { "", "", "" };
 		result[0] = getStatus(jobID, username, password) + "";
 		result[1] = JobManagement.getInstance().getJob(jobID)
@@ -34,9 +31,9 @@ public class TestJob {
 		// res.Description = JobManagement.getInstance().getJob(jobID)
 		// .getStateDescription();
 		// res.Result = JobManagement.getInstance().getJobResult(jobID);
-//		HashMap<String, String> hash = new HashMap<String, String>();
-//		hash.put("Status", result[0]);
-//		hash.put("desc", result[1]);
+		// HashMap<String, String> hash = new HashMap<String, String>();
+		// hash.put("Status", result[0]);
+		// hash.put("desc", result[1]);
 		return result;
 	}
 }

@@ -1,4 +1,5 @@
 package bio.vm;
+
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Iterator;
@@ -91,17 +92,22 @@ public class VMmanagement implements Closeable {
 		}
 		System.out.println("Boot complete, ready to go!");
 		VM vm = new VM(this.context, name, serverID, floatingIP);
+		vm.runInitScript();
 		return vm;
 	}
 
-	public void terminateInstancebyName(String serverName) {
-		terminateInstancebyId(getServerId(serverName));
+	public boolean terminateInstancebyName(String serverName) {
+		return terminateInstancebyId(getServerId(serverName));
 	}
 
-	public void terminateInstancebyId(String id) {
+	public boolean terminateInstancebyId(String id) {
 		ServerApi serverApi = context.novaApi
 				.getServerApiForZone(context.defaultZone);
-		serverApi.delete(id);
+		return serverApi.delete(id);
+	}
+
+	public boolean terminateInstance(VM vm) {
+		return terminateInstancebyId(vm.getID());
 	}
 
 	public String getFlavorId(String flavor) {

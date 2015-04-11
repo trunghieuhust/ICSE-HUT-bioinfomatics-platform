@@ -12,9 +12,9 @@ public class HandlerRequest {
 		}
 	}
 
-	public String submit(String tool, String[] data) {
+	public String submit(User user, String tool, String[] data) {
 		String jobID;
-		jobID = JobManagement.getInstance().createJob();
+		jobID = JobManagement.getInstance().createJob(user);
 		return jobID;
 	}
 }
