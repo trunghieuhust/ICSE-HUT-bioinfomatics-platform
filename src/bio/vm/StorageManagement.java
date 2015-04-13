@@ -1,11 +1,11 @@
 package bio.vm;
+
 import static org.jclouds.io.Payloads.newByteSourcePayload;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -37,30 +37,30 @@ public class StorageManagement implements Closeable {
 	// private User user;
 	private SwiftApi swiftApi;
 
-	public static void main(String[] args) throws IOException {
-		String CONTAINER_NAME = "keypair";
-		String OBJECT_NAME = "ducdmk55.pem";
-		StorageManagement jcloudsSwift = new StorageManagement(new User("ducdmk55",
-				"ducdmk55@123"));
-		String privatekey;
-		try {
-
-			privatekey = Files.toString(jcloudsSwift.getFile(jcloudsSwift
-					.getFileLink(OBJECT_NAME, CONTAINER_NAME)),
-					StandardCharsets.UTF_8);
-			System.out.println(privatekey);
-			// jcloudsSwift.createContainer(CONTAINER_NAME);
-			// jcloudsSwift.uploadFileFromPath(OBJECT_NAME, CONTAINER_NAME);
-			// jcloudsSwift.listContainers();
-			// jcloudsSwift.listFile(CONTAINER_NAME);
-			// jcloudsSwift.getFileLink(OBJECT_NAME, CONTAINER_NAME);
-			// jcloudsSwift.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		} finally {
-			jcloudsSwift.close();
-		}
-	}
+	// public static void main(String[] args) throws IOException {
+	// String CONTAINER_NAME = "keypair";
+	// String OBJECT_NAME = "ducdmk55.pem";
+	// StorageManagement jcloudsSwift = new StorageManagement(new User(
+	// "ducdmk55", "ducdmk55@123"));
+	// String privatekey;
+	// try {
+	//
+	// privatekey = Files.toString(jcloudsSwift.getFile(jcloudsSwift
+	// .getFileLink(OBJECT_NAME, CONTAINER_NAME)),
+	// StandardCharsets.UTF_8);
+	// System.out.println(privatekey);
+	// jcloudsSwift.createContainer(CONTAINER_NAME);
+	// jcloudsSwift.uploadFileFromPath(OBJECT_NAME, CONTAINER_NAME);
+	// jcloudsSwift.listContainers();
+	// jcloudsSwift.listFile(CONTAINER_NAME);
+	// jcloudsSwift.getFileLink(OBJECT_NAME, CONTAINER_NAME);
+	// jcloudsSwift.close();
+	// } catch (Exception e) {
+	// e.printStackTrace();
+	// } finally {
+	// jcloudsSwift.close();
+	// }
+	// }
 
 	public StorageManagement(User user) {
 		// this.user = user;
@@ -204,6 +204,13 @@ public class StorageManagement implements Closeable {
 		File downloadedFile = new File("downloaded-file");
 		org.apache.commons.io.FileUtils.copyURLToFile(url, downloadedFile);
 		return downloadedFile;
+	}
+
+	public boolean copyFileToOtherContainer(String filename,
+			String sourceContainer, String destinationContainer) {
+		ObjectApi objectApi = swiftApi.getObjectApi(this.defaultZone,
+				destinationContainer);
+		return objectApi.copy(filename, sourceContainer, filename);
 	}
 
 	public void close() throws IOException {
