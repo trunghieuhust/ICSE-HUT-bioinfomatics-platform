@@ -85,14 +85,13 @@ public class VMmanagement implements Closeable {
 		}
 		System.out.println("Waiting for complete booting");
 		try {
-			Thread.sleep(20000);
+			Thread.sleep(45000);
 		} catch (InterruptedException e) {
 			System.out.println("Error occured");
 			return null;
 		}
 		System.out.println("Boot complete, ready to go!");
 		VM vm = new VM(this.context, name, serverID, floatingIP);
-		vm.runInitScript();
 		return vm;
 	}
 

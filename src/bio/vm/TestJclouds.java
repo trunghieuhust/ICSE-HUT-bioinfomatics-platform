@@ -13,7 +13,7 @@ public class TestJclouds {
 		StorageManagement storage = user.getStorageUtils();
 
 		manager.listServers();
-		VM vm = manager.launchInstance("Ubuntu", CloudConfig.ubuntuImage,
+		VM vm = manager.launchInstance("Ubuntu", CloudConfig.cloudBioImage,
 				"m1.small");
 		if (vm != null) {
 			System.out.println(vm.getID());

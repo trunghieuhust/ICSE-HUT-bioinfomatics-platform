@@ -1,4 +1,5 @@
 package bio.vm;
+
 import java.util.Set;
 
 import org.jclouds.ContextBuilder;
@@ -19,6 +20,8 @@ public class Context {
 	public final ComputeServiceContext computeContext;
 	public final Set<String> zones;
 	public final LoginCredentials loginCredentials;
+	public final String userPassword;
+	public final String username;
 	String defaultZone = null;
 
 	public Context(User user) {
@@ -45,5 +48,7 @@ public class Context {
 		}
 		loginCredentials = new LoginCredentials.Builder().user("ubuntu")
 				.privateKey(user.getKeypair()).build();
+		this.username = user.getUsername();
+		this.userPassword = user.getPassword();
 	}
 }
