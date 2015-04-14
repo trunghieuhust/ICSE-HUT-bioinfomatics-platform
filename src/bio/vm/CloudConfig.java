@@ -19,4 +19,6 @@ public interface CloudConfig {
 	public static final String cloudBioImage = "cloud-bio-v1";
 	public static final String initScriptLink = "http://192.168.50.12:8080/v1/AUTH_e9718a4e5275474f8b157edf2167022b/script/cloudfuse-config.sh";
 	public static final String keypairContainer = "keypair";
+	public static final String instanceLogFolderLink = "http://192.168.50.12:8080/v1/AUTH_e9718a4e5275474f8b157edf2167022b/instance-log";
+	public static final String bootCompleteString = "Cloud-init v. 0.7.5 finished at";
 }

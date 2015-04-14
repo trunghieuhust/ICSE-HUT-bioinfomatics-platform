@@ -1,11 +1,15 @@
 package bio.vm;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.jclouds.openstack.neutron.v2.domain.Network;
 import org.jclouds.openstack.neutron.v2.features.NetworkApi;
@@ -57,6 +61,7 @@ public class VMmanagement implements Closeable {
 
 	public VM launchInstance(String name, String image, String flavor) {
 		int timeoutCounting = 0;
+		int readLogCount = 0;
 		String keypairName = user.getUsername();
 		CreateServerOptions options = CreateServerOptions.Builder.keyPairName(
 				keypairName).networks(
@@ -70,9 +75,10 @@ public class VMmanagement implements Closeable {
 		System.out.println("Waiting for server booting....");
 
 		while (!attachIP(floatingIP, serverID)) {
-			if (timeoutCounting < 15) {
+			if (timeoutCounting < 40) {
 				try {
-					Thread.sleep(3000);
+					System.out.println(timeoutCounting);
+					Thread.sleep(1000);
 					timeoutCounting++;
 				} catch (InterruptedException e) {
 					System.out.println("Error when attaching floating IP");
@@ -84,15 +90,56 @@ public class VMmanagement implements Closeable {
 			}
 		}
 		System.out.println("Waiting for complete booting");
-		try {
-			Thread.sleep(45000);
-		} catch (InterruptedException e) {
-			System.out.println("Error occured");
-			return null;
+		while (!checkLogInstance(serverID)) {
+			if (readLogCount < 40) {
+				try {
+					System.out.println(readLogCount);
+					Thread.sleep(1000);
+					readLogCount++;
+				} catch (InterruptedException e) {
+					System.out.println("Error occured");
+					return null;
+				}
+			}
 		}
+
 		System.out.println("Boot complete, ready to go!");
 		VM vm = new VM(this.context, name, serverID, floatingIP);
 		return vm;
+	}
+
+	public boolean checkLogInstance(String serverID) {
+		String fileLink = CloudConfig.instanceLogFolderLink + "/" + serverID
+				+ "/console.log";
+		URL url;
+		try {
+			url = new URL(fileLink);
+			File downloadedFile = new File("downloaded-file");
+			org.apache.commons.io.FileUtils.copyURLToFile(url, downloadedFile);
+			ReversedLinesFileReader reader = new ReversedLinesFileReader(
+					downloadedFile);
+			StringBuilder builder = new StringBuilder();
+			for (int i = 0; i < 20; i++) {
+				builder.append(reader.readLine());
+				// builder.append("\n");
+			}
+			System.out.println(builder.toString());
+			if (builder.toString().toLowerCase()
+					.contains(CloudConfig.bootCompleteString.toLowerCase())) {
+				reader.close();
+				return true;
+			} else {
+				reader.close();
+				return false;
+			}
+		} catch (MalformedURLException e) {
+			return false;
+		} catch (IOException e) {
+			return false;
+		} catch (NullPointerException e) {
+			return false;
+		}
+
 	}
 
 	public boolean terminateInstancebyName(String serverName) {
@@ -205,6 +252,7 @@ public class VMmanagement implements Closeable {
 	public String getFloatingIP(String serverId) {
 		ServerApi serverApi = context.novaApi
 				.getServerApiForZone(context.defaultZone);
+
 		String address = null;
 		try {
 			Server serverObj = serverApi.get(serverId);
