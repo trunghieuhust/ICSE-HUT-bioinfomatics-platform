@@ -171,7 +171,7 @@ public class StorageManagement implements Closeable {
 		Set<Container> containers = containerApi.list().toSet();
 		for (Container container : containers) {
 			if (container.getName().equals(containerName)) {
-				System.out.println("List Files:");
+//				System.out.println("List Files:");
 				ObjectApi objectApi = swiftApi.getObjectApi(this.defaultZone,
 						containerName);
 				Iterator<SwiftObject> objectIterators = objectApi.list()
@@ -179,7 +179,7 @@ public class StorageManagement implements Closeable {
 				while (objectIterators.hasNext()) {
 					SwiftObject swiftObject = objectIterators.next();
 					if (swiftObject.getName().equals(fileName)) {
-						System.out.println("File found");
+//						System.out.println("File found");
 						return swiftObject.getUri().toString();
 					}
 				}
