@@ -1,4 +1,5 @@
 package bio.service;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
@@ -27,16 +28,15 @@ public class User {
 		this.manager = new VMmanagement(this);
 	}
 
-	private void setKeypair() {
-		String keypairLink = this.storage.getFileLink(username + ".pem",
-				CloudConfig.keypairContainer);
-
+	public void setKeypair() {
+		String keypairLink = StorageManagement.getAdminInstance().getFileLink(
+				username + ".pem", CloudConfig.keypairContainer);
 		try {
-			this.keypair = Files.toString(storage.getFile(keypairLink),
-					StandardCharsets.UTF_8);
+			this.keypair = Files.toString(StorageManagement.getAdminInstance()
+					.getFile(keypairLink), StandardCharsets.UTF_8);
+			System.out.println("keypair is set");
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			System.out.println("Keypair not found");
 		}
 
 	}
@@ -63,11 +63,6 @@ public class User {
 
 	public String getUserIdentity() {
 		return userIdentity;
-	}
-
-	public static void main(String[] args) {
-		User user = new User("ducdmk55", "ducdmk55@123");
-		System.out.println(user.keypair);
 	}
 
 	public VMmanagement getManager() {

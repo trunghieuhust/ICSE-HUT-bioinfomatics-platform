@@ -1,10 +1,11 @@
 package bio.service;
+
 import java.util.NoSuchElementException;
 
 import org.jclouds.ContextBuilder;
+import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.openstack.keystone.v2_0.KeystoneApi;
-import org.jclouds.openstack.keystone.v2_0.domain.Role;
-import org.jclouds.openstack.keystone.v2_0.extensions.RoleAdminApi;
+import org.jclouds.openstack.keystone.v2_0.extensions.TenantAdminApi;
 import org.jclouds.openstack.keystone.v2_0.extensions.UserAdminApi;
 import org.jclouds.openstack.keystone.v2_0.features.TenantApi;
 import org.jclouds.openstack.keystone.v2_0.features.UserApi;
@@ -12,22 +13,26 @@ import org.jclouds.openstack.keystone.v2_0.options.CreateUserOptions;
 import org.jclouds.rest.AuthorizationException;
 
 import bio.vm.CloudConfig;
+import bio.vm.StorageManagement;
+import bio.vm.VMmanagement;
 
 import com.google.common.base.Optional;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Module;
 
 public class UserManagement {
 
-	private KeystoneApi keystoneApi;
+	private final KeystoneApi keystoneApi;
 	private static UserManagement instance;
 
 	public UserManagement() {
-		// Iterable<Module> modules = ImmutableSet
-		// .<Module> of(new SLF4JLoggingModule());
+		Iterable<Module> modules = ImmutableSet
+				.<Module> of(new SLF4JLoggingModule());
 		keystoneApi = ContextBuilder
 				.newBuilder(CloudConfig.keystoneProvider)
-				.endpoint(CloudConfig.endpoint)
+				.endpoint(CloudConfig.adminServiceEndpoint)
 				.credentials(CloudConfig.adminIdentity,
-						CloudConfig.adminCredentials)
+						CloudConfig.adminCredentials).modules(modules)
 				.buildApi(KeystoneApi.class);
 	}
 
@@ -78,34 +83,55 @@ public class UserManagement {
 			return null;
 	}
 
-	// TODO Create user in openstack: not running
-	public void createUser(String username, String password) {
-		Optional<? extends UserAdminApi> userAdminApis = this.keystoneApi
-				.getUserAdminApi();
-		Optional<? extends RoleAdminApi> roleAdminApis = this.keystoneApi
-				.getRoleAdminApi();
+	public boolean createUser(String username, String password) {
+		UserAdminApi userAdminApi = this.keystoneApi.getUserAdminApi().get();
+		TenantAdminApi tenantAdminApi = this.keystoneApi.getTenantAdminApi()
+				.get();
 		// Create user in Bio tenant and Member Role
+		CreateUserOptions option = new CreateUserOptions().tenant(
+				CloudConfig.bioServiceTenantName).enabled(true);
 
-		if (userAdminApis.isPresent() && roleAdminApis.isPresent()) {
-			UserAdminApi adminApi = userAdminApis.get();
-			RoleAdminApi roleAdminApi = roleAdminApis.get();
-			Role role = roleAdminApi.get(CloudConfig.memberRoleID);
-			CreateUserOptions option = new CreateUserOptions();
-			option.tenant(CloudConfig.bioServiceTenantID);
-			option.enabled(true);
-			org.jclouds.openstack.keystone.v2_0.domain.User user = adminApi
+		if (!isUserExist(username)) {
+			org.jclouds.openstack.keystone.v2_0.domain.User user = userAdminApi
 					.create(username, password, option);
-			user.add(role);
+			tenantAdminApi.addRoleOnTenant(CloudConfig.bioServiceTenantID,
+					user.getId(), CloudConfig.memberRoleID);
 			System.out.println("User ID: " + user.getId());
-		} else if (!userAdminApis.isPresent()) {
-			System.out.println("userAdminApis null");
-		} else
-			System.out.println("RoleAdimin Api null");
+
+			// Create keypair and upload to swift
+			User createdUser = new User(username, password);
+			VMmanagement vmManager = createdUser.getManager();
+			if (vmManager.generateKeypair(username)) {
+				StorageManagement.getAdminInstance().uploadFileFromPath(
+						username + ".pem", CloudConfig.keypairContainer);
+				createdUser.setKeypair();
+				// Create user-upload container
+				createdUser.getStorageUtils().createContainer(
+						username + "-upload");
+				return true;
+			} else
+				return false;
+
+		}
+
+		else {
+			System.out.println("User is already exist!");
+			return false;
+		}
+
 	}
 
 	// TODO Delete user in openstack
 	public void deleteUser() {
 
+	}
+
+	public boolean isUserExist(String username) {
+		UserApi userApi = this.keystoneApi.getUserApi().get();
+		if (userApi.getByName(username) != null) {
+			return true;
+		} else
+			return false;
 	}
 
 	public static UserManagement getInstance() {
@@ -118,11 +144,20 @@ public class UserManagement {
 	}
 
 	public static void main(String[] args) {
-		User user = UserManagement.getInstance().login("ducdmk55",
-				"ducdmk55@123");
-		if (user != null) {
-			System.out.println(user.getKeypair());
-		}
-		UserManagement.getInstance().createUser("dattsk55", "dattsk55@123");
+		// User user = UserManagement.getInstance().login("ducdmk55",
+		// "ducdmk55@123");
+		// if (user != null) {
+		// System.out.println(user.getKeypair());
+		// user.getManager().generateKeypair("abc");
+		// }
+
+		UserManagement manager = new UserManagement();
+		if (manager.createUser("anhnnk55", "anhnnk55@123")) {
+			System.out.println("sucess");
+		} else
+			System.out.println("fail");
+
+		// UserManagement manager = new UserManagement();
+		// System.out.println(manager.isUserExist("dacdmk55"));
 	}
 }
