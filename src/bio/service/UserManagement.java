@@ -122,7 +122,23 @@ public class UserManagement {
 	}
 
 	// TODO Delete user in openstack
-	public void deleteUser() {
+	public boolean deleteUser(User user) {
+		if (!isUserExist(user.getUsername()))
+			return false;
+		else {
+			UserAdminApi userAdminApi = this.keystoneApi.getUserAdminApi()
+					.get();
+			UserApi userApi = this.keystoneApi.getUserApi().get();
+			String userID = userApi.getByName(user.getUsername()).getId();
+			if (userAdminApi.delete(userID)) {
+				user.getStorageUtils().deleteContainer(
+						user.getUsername() + "-upload");
+				StorageManagement.getAdminInstance().deleteFile(
+						user.getUsername() + ".pem", "keypair");
+				return true;
+			} else
+				return false;
+		}
 
 	}
 
@@ -151,13 +167,19 @@ public class UserManagement {
 		// user.getManager().generateKeypair("abc");
 		// }
 
-		UserManagement manager = new UserManagement();
-		if (manager.createUser("anhnnk55", "anhnnk55@123")) {
-			System.out.println("sucess");
-		} else
-			System.out.println("fail");
+		// UserManagement manager = new UserManagement();
+		// if (manager.createUser("anhnnk55", "anhnnk55@123")) {
+		// System.out.println("sucess");
+		// } else
+		// System.out.println("fail");
 
 		// UserManagement manager = new UserManagement();
 		// System.out.println(manager.isUserExist("dacdmk55"));
+		if (UserManagement.getInstance().deleteUser(
+				new User("dattsk55", "anhnnk55@123"))) {
+			System.out.println("success");
+		} else
+			System.out.println("fail");
+		;
 	}
 }
