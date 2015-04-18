@@ -13,7 +13,7 @@ public class TestJclouds {
 
 		// manager.listServers();
 
-		VM vm = manager.launchInstance("Ubuntu", "cloud-bio-v1", "m1.small");
+		VM vm = manager.launchInstance("Ubuntu", "cloud-bio-v2", "m1.small");
 		if (vm != null) {
 			System.out.println(vm.getID());
 			System.out.println(vm.executeCommand("curl www.vnexpress.net"));
