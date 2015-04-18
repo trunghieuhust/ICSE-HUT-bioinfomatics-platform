@@ -1,16 +1,18 @@
 package bio.vm;
 
 import java.io.Closeable;
-import java.io.File;
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
-import org.apache.commons.io.input.ReversedLinesFileReader;
 import org.apache.commons.validator.routines.InetAddressValidator;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.jclouds.openstack.neutron.v2.domain.Network;
 import org.jclouds.openstack.neutron.v2.features.NetworkApi;
 import org.jclouds.openstack.nova.v2_0.domain.Address;
@@ -26,6 +28,7 @@ import org.jclouds.openstack.nova.v2_0.features.ImageApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
 import org.jclouds.openstack.v2_0.domain.Resource;
+import org.json.JSONObject;
 
 import bio.service.User;
 
@@ -109,37 +112,77 @@ public class VMmanagement implements Closeable {
 	}
 
 	public boolean checkLogInstance(String serverID) {
-		String fileLink = CloudConfig.instanceLogFolderLink + "/" + serverID
-				+ "/console.log";
-		URL url;
-		try {
-			url = new URL(fileLink);
-			File downloadedFile = new File("downloaded-file");
-			org.apache.commons.io.FileUtils.copyURLToFile(url, downloadedFile);
-			ReversedLinesFileReader reader = new ReversedLinesFileReader(
-					downloadedFile);
-			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < 20; i++) {
-				builder.append(reader.readLine());
-				// builder.append("\n");
-			}
-			System.out.println(builder.toString());
-			if (builder.toString().toLowerCase()
-					.contains(CloudConfig.bootCompleteString.toLowerCase())) {
-				reader.close();
-				return true;
-			} else {
-				reader.close();
-				return false;
-			}
-		} catch (MalformedURLException e) {
+		String log = this.getInstanceLog(serverID);
+		if (log == null)
 			return false;
-		} catch (IOException e) {
+		else if (log.toLowerCase().contains(
+				CloudConfig.bootCompleteString.toLowerCase()))
+			return true;
+		else
 			return false;
-		} catch (NullPointerException e) {
-			return false;
-		}
+	}
 
+	private String getInstanceLog(String serverID) {
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		try {
+			String httpRequestLink = "http://192.168.50.12:8774/v2/"
+					+ CloudConfig.bioServiceTenantID + "/servers/" + serverID
+					+ "/action";
+			String token = this.getToken();
+			if (token == null)
+				return null;
+			else {
+				HttpPost request = new HttpPost(httpRequestLink);
+				String json_data = "{\"os-getConsoleOutput\":{\"length\":15}}";
+				StringEntity params = new StringEntity(json_data);
+				request.addHeader("content-type", "application/json");
+				request.addHeader("X-Auth-Token", token);
+				request.setEntity(params);
+				HttpResponse response = httpClient.execute(request);
+
+				if (response.getStatusLine().getStatusCode() != 200) {
+					return null;
+				} else {
+					JSONObject rootObject = new JSONObject(
+							EntityUtils.toString(response.getEntity()));
+					return rootObject.getString("output");
+				}
+			}
+			// handle response here...
+		} catch (Exception ex) {
+			// handle exception here
+			return null;
+		}
+	}
+
+	private String getToken() {
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		try {
+			String httpRequestLink = "http://192.168.50.12:35357/v2.0/tokens";
+			HttpPost request = new HttpPost(httpRequestLink);
+			String json_data = "{\"auth\": {\"tenantName\": \""
+					+ CloudConfig.bioServiceTenantName
+					+ "\",\"passwordCredentials\": {\"username\": \""
+					+ this.user.getUsername() + "\",\"password\": \""
+					+ this.user.getPassword() + "\"}}}";
+			StringEntity params = new StringEntity(json_data);
+			request.addHeader("content-type", "application/json");
+			request.setEntity(params);
+			HttpResponse response = httpClient.execute(request);
+			// proceed only if status code = 200
+			if (response.getStatusLine().getStatusCode() == 200) {
+				JSONObject rootObject = new JSONObject(
+						EntityUtils.toString(response.getEntity()));
+				JSONObject tokenObject = rootObject.getJSONObject("access")
+						.getJSONObject("token");
+				return tokenObject.getString("id");
+
+			} else
+				return null;
+		} catch (Exception ex) {
+			// handle exception here
+			return null;
+		}
 	}
 
 	public boolean terminateInstancebyName(String serverName) {
