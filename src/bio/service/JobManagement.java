@@ -33,6 +33,13 @@ public class JobManagement {
 		return jobID.toString();
 	}
 
+	public String createJob(User user, String workflow) {
+		UUID jobID = UUIDGenerator.nextUUID();
+		
+		return jobID.toString();
+		
+	}
+	
 	public String getJobResult(String jobID) {
 		Job job = null;
 		UUID uuid = UUIDGenerator.UUIDfromString(jobID);

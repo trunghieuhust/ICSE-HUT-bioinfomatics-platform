@@ -17,4 +17,10 @@ public class HandlerRequest {
 		jobID = JobManagement.getInstance().createJob(user);
 		return jobID;
 	}
+
+	public String submit(User user, String workflow) {
+		String jobID = null;
+
+		return jobID;
+	}
 }

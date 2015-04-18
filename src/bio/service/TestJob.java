@@ -36,4 +36,10 @@ public class TestJob {
 		// hash.put("desc", result[1]);
 		return result;
 	}
+
+	public String submitWorkflow(String workflow) {
+		
+		return workflow;
+
+	}
 }

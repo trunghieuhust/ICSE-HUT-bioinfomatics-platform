@@ -30,6 +30,12 @@
 		</plugins>
 	</build>
 	<dependencies>
+		<dependency>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.8.1</version>
+		</dependency>
+
 		<!-- jclouds dependencies -->
 		<dependency>
 			<groupId>org.apache.jclouds.driver</groupId>
