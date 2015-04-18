@@ -38,30 +38,13 @@ public class StorageManagement implements Closeable {
 	private SwiftApi swiftApi;
 	private static StorageManagement instance;
 
-	// public static void main(String[] args) throws IOException {
-	// String CONTAINER_NAME = "keypair";
-	// String OBJECT_NAME = "ducdmk55.pem";
-	// StorageManagement jcloudsSwift = new StorageManagement(new User(
-	// "ducdmk55", "ducdmk55@123"));
-	// String privatekey;
-	// try {
-	//
-	// privatekey = Files.toString(jcloudsSwift.getFile(jcloudsSwift
-	// .getFileLink(OBJECT_NAME, CONTAINER_NAME)),
-	// StandardCharsets.UTF_8);
-	// System.out.println(privatekey);
-	// jcloudsSwift.createContainer(CONTAINER_NAME);
-	// jcloudsSwift.uploadFileFromPath(OBJECT_NAME, CONTAINER_NAME);
-	// jcloudsSwift.listContainers();
-	// jcloudsSwift.listFile(CONTAINER_NAME);
-	// jcloudsSwift.getFileLink(OBJECT_NAME, CONTAINER_NAME);
-	// jcloudsSwift.close();
-	// } catch (Exception e) {
-	// e.printStackTrace();
-	// } finally {
-	// jcloudsSwift.close();
-	// }
-	// }
+	public static void main(String[] args) throws IOException {
+		String CONTAINER_NAME = "keypair";
+		String OBJECT_NAME = "ducdmk55.pem";
+		StorageManagement jcloudsSwift = new StorageManagement(new User(
+				"ducdmk55", "ducdmk55@123"));
+		jcloudsSwift.deleteContainer("abcabc");
+	}
 
 	public StorageManagement(User user) {
 		this.user = user;
@@ -129,10 +112,44 @@ public class StorageManagement implements Closeable {
 		System.out.println("  " + filePath);
 	}
 
-	public void deleteFile(String fileName, String container) {
+	public boolean deleteFile(String fileName, String container) {
 		ObjectApi objectApi = swiftApi
 				.getObjectApi(this.defaultZone, container);
-		objectApi.delete(fileName);
+
+		if (getFileLink(fileName, container) != null) {
+			System.out.println("delete file: " + fileName);
+			objectApi.delete(fileName);
+			return true;
+		} else {
+			System.out.println("Fail to delete!");
+			return false;
+		}
+	}
+
+	public boolean deleteContainer(String containerName) {
+		ContainerApi containerApi = swiftApi.getContainerApi(this.defaultZone);
+		Set<Container> containers = containerApi.list().toSet();
+		for (Container container : containers) {
+			if (container.getName().equals(containerName)) {
+				System.out.println("List Files:");
+
+				ObjectApi objectApi = swiftApi.getObjectApi(this.defaultZone,
+						containerName);
+				Iterator<SwiftObject> objectIterators = objectApi.list()
+						.iterator();
+				while (objectIterators.hasNext()) {
+					SwiftObject swiftObject = objectIterators.next();
+					this.deleteFile(swiftObject.getName(), containerName);
+				}
+				if (containerApi.deleteIfEmpty(containerName)) {
+					return true;
+				} else
+					return false;
+			}
+		}
+
+		System.out.println("Container's name provided mismatch!");
+		return false;
 	}
 
 	/**
