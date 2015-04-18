@@ -1,11 +1,13 @@
 package bio.vm;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -19,10 +21,12 @@ import org.jclouds.openstack.nova.v2_0.domain.Address;
 import org.jclouds.openstack.nova.v2_0.domain.Flavor;
 import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
 import org.jclouds.openstack.nova.v2_0.domain.Image;
+import org.jclouds.openstack.nova.v2_0.domain.KeyPair;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.openstack.nova.v2_0.domain.Server.Status;
 import org.jclouds.openstack.nova.v2_0.domain.ServerCreated;
 import org.jclouds.openstack.nova.v2_0.extensions.FloatingIPApi;
+import org.jclouds.openstack.nova.v2_0.extensions.KeyPairApi;
 import org.jclouds.openstack.nova.v2_0.features.FlavorApi;
 import org.jclouds.openstack.nova.v2_0.features.ImageApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
@@ -78,10 +82,10 @@ public class VMmanagement implements Closeable {
 		System.out.println("Waiting for server booting....");
 
 		while (!attachIP(floatingIP, serverID)) {
-			if (timeoutCounting < 40) {
+			if (timeoutCounting < 200) {
 				try {
 					System.out.println(timeoutCounting);
-					Thread.sleep(1000);
+					Thread.sleep(500);
 					timeoutCounting++;
 				} catch (InterruptedException e) {
 					System.out.println("Error when attaching floating IP");
@@ -93,11 +97,12 @@ public class VMmanagement implements Closeable {
 			}
 		}
 		System.out.println("Waiting for complete booting");
+		// TODO check boot complete
 		while (!checkLogInstance(serverID)) {
-			if (readLogCount < 40) {
+			if (readLogCount < 200) {
 				try {
 					System.out.println(readLogCount);
-					Thread.sleep(1000);
+					Thread.sleep(500);
 					readLogCount++;
 				} catch (InterruptedException e) {
 					System.out.println("Error occured");
@@ -109,6 +114,21 @@ public class VMmanagement implements Closeable {
 		System.out.println("Boot complete, ready to go!");
 		VM vm = new VM(this.context, name, serverID, floatingIP);
 		return vm;
+	}
+
+	public boolean generateKeypair(String keypairName) {
+		KeyPairApi keypairApi = context.novaApi.getKeyPairExtensionForZone(
+				context.defaultZone).get();
+		KeyPair keypair = keypairApi.create(keypairName);
+		try {
+			FileUtils.writeStringToFile(new File(keypairName + ".pem"),
+					keypair.getPrivateKey());
+			return true;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false;
+		}
+
 	}
 
 	public boolean checkLogInstance(String serverID) {

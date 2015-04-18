@@ -34,8 +34,9 @@ public class StorageManagement implements Closeable {
 	private String defaultZone = null;
 	public static final String CONTAINER_NAME = "jclouds-example";
 	public static final String OBJECT_NAME = "jclouds-keypair.pem";
-	// private User user;
+	private User user;
 	private SwiftApi swiftApi;
+	private static StorageManagement instance;
 
 	// public static void main(String[] args) throws IOException {
 	// String CONTAINER_NAME = "keypair";
@@ -63,16 +64,28 @@ public class StorageManagement implements Closeable {
 	// }
 
 	public StorageManagement(User user) {
-		// this.user = user;
+		this.user = user;
 		Iterable<Module> modules = ImmutableSet
 				.<Module> of(new SLF4JLoggingModule());
 
-		String identity = CloudConfig.bioServiceTenantName + ":"
-				+ user.getUsername();
-		swiftApi = ContextBuilder.newBuilder(CloudConfig.swiftProvider)
+		swiftApi = ContextBuilder
+				.newBuilder(CloudConfig.swiftProvider)
 				.endpoint(CloudConfig.endpoint)
-				.credentials(identity, user.getPassword()).modules(modules)
+				.credentials(this.user.getUserIdentity(),
+						this.user.getPassword()).modules(modules)
 				.buildApi(SwiftApi.class);
+		zones = swiftApi.getConfiguredRegions();
+		if (null == defaultZone) {
+			defaultZone = zones.iterator().next();
+		}
+	}
+
+	public StorageManagement() {
+		swiftApi = ContextBuilder
+				.newBuilder(CloudConfig.swiftProvider)
+				.endpoint(CloudConfig.endpoint)
+				.credentials(CloudConfig.adminIdentity,
+						CloudConfig.adminCredentials).buildApi(SwiftApi.class);
 		zones = swiftApi.getConfiguredRegions();
 		if (null == defaultZone) {
 			defaultZone = zones.iterator().next();
@@ -91,9 +104,11 @@ public class StorageManagement implements Closeable {
 				.metadata(ImmutableMap.of("key1", "value1", "key2", "value2"))
 				.anybodyRead();
 
-		containerApi.create(container, options);
-
-		System.out.println("  " + container);
+		if (containerApi.create(container, options)) {
+			System.out.println("Created " + container);
+		} else {
+			System.out.println("Fail to create container");
+		}
 	}
 
 	/**
@@ -103,8 +118,6 @@ public class StorageManagement implements Closeable {
 	 * @return Upload file to specified container
 	 */
 	public void uploadFileFromPath(String filePath, String container) {
-		System.out.println("Upload file");
-
 		ObjectApi objectApi = swiftApi
 				.getObjectApi(this.defaultZone, container);
 		ByteSource data = Files.asByteSource(new File(filePath));
@@ -116,9 +129,16 @@ public class StorageManagement implements Closeable {
 		System.out.println("  " + filePath);
 	}
 
+	public void deleteFile(String fileName, String container) {
+		ObjectApi objectApi = swiftApi
+				.getObjectApi(this.defaultZone, container);
+		objectApi.delete(fileName);
+	}
+
 	/**
 	 * List all containers belong to user
 	 */
+
 	public void listContainers() {
 		System.out.println("List Containers");
 
@@ -171,15 +191,15 @@ public class StorageManagement implements Closeable {
 		Set<Container> containers = containerApi.list().toSet();
 		for (Container container : containers) {
 			if (container.getName().equals(containerName)) {
-//				System.out.println("List Files:");
+				// System.out.println("List Files:");
 				ObjectApi objectApi = swiftApi.getObjectApi(this.defaultZone,
 						containerName);
 				Iterator<SwiftObject> objectIterators = objectApi.list()
 						.iterator();
 				while (objectIterators.hasNext()) {
 					SwiftObject swiftObject = objectIterators.next();
-					if (swiftObject.getName().equals(fileName)) {
-//						System.out.println("File found");
+					if (swiftObject.getName().contains(fileName)) {
+						// System.out.println("File found");
 						return swiftObject.getUri().toString();
 					}
 				}
@@ -188,7 +208,7 @@ public class StorageManagement implements Closeable {
 			}
 		}
 
-		System.out.println("Container's name provided mismatch!");
+		System.out.println("Container's name provided mismatch!1");
 		return null;
 
 	}
@@ -211,6 +231,15 @@ public class StorageManagement implements Closeable {
 		ObjectApi objectApi = swiftApi.getObjectApi(this.defaultZone,
 				destinationContainer);
 		return objectApi.copy(filename, sourceContainer, filename);
+	}
+
+	public static StorageManagement getAdminInstance() {
+		if (instance == null) {
+			instance = new StorageManagement();
+			return instance;
+		} else {
+			return instance;
+		}
 	}
 
 	public void close() throws IOException {
