@@ -43,7 +43,7 @@ public class StorageManagement implements Closeable {
 		String OBJECT_NAME = "ducdmk55.pem";
 		StorageManagement jcloudsSwift = new StorageManagement(new User(
 				"ducdmk55", "ducdmk55@123"));
-
+		jcloudsSwift.deleteContainer("abcabc");
 	}
 
 	public StorageManagement(User user) {
@@ -117,12 +117,40 @@ public class StorageManagement implements Closeable {
 				.getObjectApi(this.defaultZone, container);
 
 		if (getFileLink(fileName, container) != null) {
+			System.out.println("delete file: " + fileName);
 			objectApi.delete(fileName);
 			return true;
 		} else {
 			System.out.println("Fail to delete!");
 			return false;
 		}
+	}
+
+	public boolean deleteContainer(String containerName) {
+		ContainerApi containerApi = swiftApi.getContainerApi(this.defaultZone);
+		Set<Container> containers = containerApi.list().toSet();
+		for (Container container : containers) {
+			if (container.getName().equals(containerName)) {
+				System.out.println("List Files:");
+
+				ObjectApi objectApi = swiftApi.getObjectApi(this.defaultZone,
+						containerName);
+				Iterator<SwiftObject> objectIterators = objectApi.list()
+						.iterator();
+				while (objectIterators.hasNext()) {
+					SwiftObject swiftObject = objectIterators.next();
+					this.deleteFile(swiftObject.getName(), containerName);
+				}
+				if (containerApi.deleteIfEmpty(containerName)) {
+					return true;
+				} else
+					return false;
+			}
+		}
+
+		System.out.println("Container's name provided mismatch!");
+		return false;
+
 	}
 
 	/**
