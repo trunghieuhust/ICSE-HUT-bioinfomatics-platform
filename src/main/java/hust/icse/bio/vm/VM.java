@@ -43,23 +43,35 @@ public class VM {
 			return respond.getOutput();
 		} catch (Exception e) {
 			e.printStackTrace();
-			return ("Authentication Fail!");
+			System.out.println("Authentication Fail");
+			return ("ssh fail");
 		}
 	}
 
 	public void runInitScript() {
+		System.err.println("runInitScript:VM ID: " + ID);
 		System.out
 				.println(executeCommand("wget " + CloudConfig.initScriptLink));
 		executeCommand("chmod u+x cloudfuse-config.sh");
-		System.out.println(executeCommand("sed -i '1s/^/password=\""
-				+ context.userPassword + "\"\\n/' cloudfuse-config.sh"));
-		System.out.println(executeCommand("sed -i '1s/^/tenant=\""
-				+ CloudConfig.bioServiceTenantName
-				+ "\"\\n/' cloudfuse-config.sh"));
-		System.out.println(executeCommand("sed -i '1s/^/user=\""
-				+ context.username + "\"\\n/' cloudfuse-config.sh"));
-		System.out.println(executeCommand("sh cloudfuse-config.sh"));
-		System.err.println("runInitScript:VM ID: " + ID);
-	}
 
+		System.out.println("Executing command:" + "sed -i '1s/^/password=\""
+				+ context.userPassword + "\"\\n/' cloudfuse-config.sh");
+		executeCommand("sed -i '1s/^/password=\"" + context.userPassword
+				+ "\"\\n/' cloudfuse-config.sh");
+
+		System.out.println("Executing command:" + "sed -i '1s/^/tenant=\""
+				+ CloudConfig.bioServiceTenantName
+				+ "\"\\n/' cloudfuse-config.sh");
+		executeCommand("sed -i '1s/^/tenant=\""
+				+ CloudConfig.bioServiceTenantName
+				+ "\"\\n/' cloudfuse-config.sh");
+
+		System.out.println("Executing command:" + "sed -i '1s/^/user=\""
+				+ context.username + "\"\\n/' cloudfuse-config.sh");
+		executeCommand("sed -i '1s/^/user=\"" + context.username
+				+ "\"\\n/' cloudfuse-config.sh");
+
+		System.out.println(executeCommand("sh cloudfuse-config.sh"));
+
+	}
 }
