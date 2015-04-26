@@ -22,6 +22,7 @@ public interface CloudConfig {
 	public static final String userSwiftEndPoint = "http://192.168.50.12:8080/v1/AUTH_1a1c2b5a4e3e4ff482fa557768aa0f94";
 	public static final String keypairContainer = "keypair";
 	public static final String instanceLogFolderLink = "http://192.168.50.12:8080/v1/AUTH_e9718a4e5275474f8b157edf2167022b/instance-log";
-//	public static final String bootCompleteString = "Cloud-init v. 0.7.5 finished at";
+	// public static final String bootCompleteString =
+	// "Cloud-init v. 0.7.5 finished at";
 	public static final String bootCompleteString = "Ubuntu 14.04.1 LTS";
 }
