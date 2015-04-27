@@ -20,7 +20,7 @@ import com.google.common.base.Optional;
 public class UserManagement {
 
 	private final KeystoneApi keystoneApi;
-	private static UserManagement instance;
+	private static UserManagement instance = new UserManagement();
 
 	public UserManagement() {
 		keystoneApi = ContextBuilder
@@ -146,12 +146,7 @@ public class UserManagement {
 	}
 
 	public static UserManagement getInstance() {
-		if (instance == null) {
-			instance = new UserManagement();
-			return instance;
-		} else {
-			return instance;
-		}
+		return instance;
 	}
 
 	public static void main(String[] args) {

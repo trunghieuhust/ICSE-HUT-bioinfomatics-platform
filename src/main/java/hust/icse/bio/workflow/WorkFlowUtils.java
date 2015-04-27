@@ -7,7 +7,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
 public class WorkFlowUtils {
-	private static WorkFlowUtils instance;
+	private static WorkFlowUtils instance = new WorkFlowUtils();
 	private final static String WORKFLOW = "workflow";
 	private final static String ACTIVITIES = "activities";
 	private final static String ACTIVITY = "activity";
@@ -35,12 +35,7 @@ public class WorkFlowUtils {
 	}
 
 	public static WorkFlowUtils getInstance() {
-		if (instance == null) {
-			instance = new WorkFlowUtils();
-			return instance;
-		} else {
-			return instance;
-		}
+		return instance;
 	}
 
 	public ArrayList<Activity> parse(String workflow) {
@@ -70,7 +65,7 @@ public class WorkFlowUtils {
 			tool.setPackageName(toolsNode.get(i).select(PACKAGE).text());
 			tool.setVersion(toolsNode.get(i).select(VERSION).text());
 			tools.add(tool);
-//			System.out.println(tool.toString());
+			// System.out.println(tool.toString());
 		}
 		return tools;
 	}
@@ -99,7 +94,7 @@ public class WorkFlowUtils {
 			task.setOutputFile(taskElement.get(i).select(OUTPUT_FILES)
 					.attr(OUTPUT));
 			tasks.add(task);
-//			System.out.println(task.toString());
+			// System.out.println(task.toString());
 		}
 		return tasks;
 	}
@@ -108,9 +103,9 @@ public class WorkFlowUtils {
 		return true;
 	}
 
-//	public static void main(String[] args) {
-//		WorkFlowUtils wf = new WorkFlowUtils();
-//		wf.parse(TEST);
-//	}
+	// public static void main(String[] args) {
+	// WorkFlowUtils wf = new WorkFlowUtils();
+	// wf.parse(TEST);
+	// }
 
 }

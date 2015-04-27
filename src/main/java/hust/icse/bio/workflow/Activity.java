@@ -94,7 +94,9 @@ public class Activity {
 
 	public void start() {
 		for (Task task : taskList) {
-			task.start();
+			Thread taskThread = new Thread(task);
+			taskThread.start();
+			System.err.println("TaskThread: " + taskThread.getName());
 		}
 		boolean running = true;
 		while (running) {

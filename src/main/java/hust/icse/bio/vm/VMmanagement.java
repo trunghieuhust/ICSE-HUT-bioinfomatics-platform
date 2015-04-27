@@ -1,14 +1,12 @@
 package hust.icse.bio.vm;
 
 import hust.icse.bio.service.User;
-import hust.icse.bio.service.UserManagement;
+import hust.icse.bio.utils.LockObject;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
@@ -24,7 +22,6 @@ import org.jclouds.openstack.neutron.v2.domain.Network;
 import org.jclouds.openstack.neutron.v2.features.NetworkApi;
 import org.jclouds.openstack.nova.v2_0.domain.Address;
 import org.jclouds.openstack.nova.v2_0.domain.Flavor;
-import org.jclouds.openstack.nova.v2_0.domain.FloatingIP;
 import org.jclouds.openstack.nova.v2_0.domain.Image;
 import org.jclouds.openstack.nova.v2_0.domain.KeyPair;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
@@ -73,6 +70,7 @@ public class VMmanagement implements Closeable {
 	public VM launchInstance(String name, String image, String flavor) {
 		int timeoutCounting = 0;
 		int readLogCount = 0;
+		String floatingIP;
 		String keypairName = user.getUsername();
 		CreateServerOptions options = CreateServerOptions.Builder.keyPairName(
 				keypairName).networks(
@@ -82,29 +80,35 @@ public class VMmanagement implements Closeable {
 		ServerCreated ser = serverApi.create(name, this.getImageId(image),
 				this.getFlavorId(flavor), options);
 		String serverID = ser.getId();
-		String floatingIP = getOrCreateFloatingIP();
-		System.out.println("Waiting for server booting....");
 
-		while (!attachIP(floatingIP, serverID)) {
-			if (timeoutCounting < 200) {
-				try {
-					System.out.println(timeoutCounting);
-					Thread.sleep(500);
-					timeoutCounting++;
-				} catch (InterruptedException e) {
-					System.out.println("Error when attaching floating IP");
+		synchronized (LockObject.getInstance()) {
+			System.err.println("start synchronized.");
+			floatingIP = getOrCreateFloatingIP();
+			System.err.println("attaching IP " + floatingIP);
+//			System.out.println("Waiting for server booting....");
+
+			while (!attachIP(floatingIP, serverID)) {
+				if (timeoutCounting < 200) {
+					try {
+						// System.out.println(timeoutCounting);
+						Thread.sleep(500);
+						timeoutCounting++;
+					} catch (InterruptedException e) {
+						System.out.println("Error when attaching floating IP");
+						return null;
+					}
+				} else {
+					System.out.println("Booting error");
 					return null;
 				}
-			} else {
-				System.out.println("Booting error");
-				return null;
 			}
+			System.err.println("end synchronized.");
 		}
 		System.out.println("Waiting for complete booting");
 		while (!checkLogInstance(serverID)) {
 			if (readLogCount < 200) {
 				try {
-					System.out.println(readLogCount);
+					// System.out.println(readLogCount);
 					Thread.sleep(500);
 					readLogCount++;
 				} catch (InterruptedException e) {
@@ -296,38 +300,39 @@ public class VMmanagement implements Closeable {
 		throw new NullPointerException("Server not found");
 	}
 
-	public String getOrCreateFloatingIP() {
-		List<FloatingIP> freeIP = new LinkedList<FloatingIP>();
-		FloatingIPApi floatingIPApi = context.novaApi
-				.getFloatingIPExtensionForZone(context.defaultZone).get();
-		Iterator<? extends FloatingIP> floatingIP = floatingIPApi.list()
-				.iterator();
-		while (floatingIP.hasNext()) {
-			FloatingIP ip = floatingIP.next();
-			if (ip.getInstanceId() == null) {
-				freeIP.add(ip);
-			}
-		}
-		if (freeIP.size() > 0) {
-			return freeIP.get(0).getIp();
-		} else {
-			return floatingIPApi.allocateFromPool(this.getNetworkId("ext_net"))
-					.getIp();
-		}
-	}
+	// public String getOrCreateFloatingIP() {
+	// List<FloatingIP> freeIP = new LinkedList<FloatingIP>();
+	// FloatingIPApi floatingIPApi = context.novaApi
+	// .getFloatingIPExtensionForZone(context.defaultZone).get();
+	// Iterator<? extends FloatingIP> floatingIP = floatingIPApi.list()
+	// .iterator();
+	// while (floatingIP.hasNext()) {
+	// FloatingIP ip = floatingIP.next();
+	// if (ip.getInstanceId() == null) {
+	// freeIP.add(ip);
+	// }
+	// }
+	// if (freeIP.size() > 0) {
+	// return freeIP.get(0).getIp();
+	// } else {
+	// return floatingIPApi.allocateFromPool(this.getNetworkId("ext_net"))
+	// .getIp();
+	// }
+	// }
 
-	public String getOrCreateFloatingIP(String randomString) {
+	public String getOrCreateFloatingIP() {
 		// TODO get a floating IP address
-		String availableIP = this.getAvailableFloatingIP();
-		if (availableIP != null)
+		String availableIP = getAvailableFloatingIP();
+
+		if (availableIP != null) {
 			return availableIP;
-		else {
+		} else {
 			HttpClient httpClient = HttpClientBuilder.create().build();
 			try {
 				String request = "http://192.168.50.12:8774/v2/"
 						+ CloudConfig.bioServiceTenantID + "/os-floating-ips";
 				String token = this.getToken();
-				System.out.println(token);
+//				System.out.println(token);
 				if (token == null) {
 					System.out.println("Null token, Authorize Failed!");
 					return null;
@@ -342,12 +347,16 @@ public class VMmanagement implements Closeable {
 					HttpResponse response = httpClient
 							.execute(listFloatingIpRequest);
 					if (response.getStatusLine().getStatusCode() != 200) {
+						System.err.println("getOrCreateFloatingIP:"
+								+ response.toString());
 						return null;
 					} else {
 						JSONObject rootObject = new JSONObject(
 								EntityUtils.toString(response.getEntity()));
 						JSONObject object = rootObject
 								.getJSONObject("floating_ip");
+						System.err.println("getOrCreateFloatingIP:"
+								+ object.toString());
 						return object.getString("ip");
 					}
 				}
@@ -367,7 +376,7 @@ public class VMmanagement implements Closeable {
 			String request = "http://192.168.50.12:8774/v2/"
 					+ CloudConfig.bioServiceTenantID + "/os-floating-ips";
 			String token = this.getToken();
-			System.out.println(token);
+//			System.out.println(token);
 			if (token == null) {
 				System.out.println("Null token, Authorize Failed!");
 				return null;
@@ -380,9 +389,9 @@ public class VMmanagement implements Closeable {
 						.execute(listFloatingIpRequest);
 
 				if (response.getStatusLine().getStatusCode() != 200) {
-					System.out
+					System.err
 							.println(response.getStatusLine().getStatusCode());
-					System.out.println(response);
+					System.err.println(response);
 					return null;
 				} else {
 					JSONObject rootObject = new JSONObject(
@@ -440,12 +449,4 @@ public class VMmanagement implements Closeable {
 		Closeables.close(context.novaApi, true);
 	}
 
-	public static void main(String[] args) {
-		User user = UserManagement.getInstance().login("ducdmk55",
-				"ducdmk55@123");
-		VMmanagement manager = user.getManager();
-		System.out.println(manager.getOrCreateFloatingIP("abc"));
-		// System.out.println(manager
-		// .getInstanceLog("d83d65d9-c964-4d9c-86d0-db91b1c91a29"));
-	}
 }

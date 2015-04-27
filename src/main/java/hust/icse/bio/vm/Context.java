@@ -28,7 +28,6 @@ public class Context {
 		// .<Module> of(new SLF4JLoggingModule());
 		Iterable<Module> sshModules = ImmutableSet
 				.<Module> of(new JschSshClientModule());
-
 		computeContext = ContextBuilder.newBuilder(CloudConfig.novaProvider)
 				.endpoint(CloudConfig.endpoint)
 				.credentials(user.getUserIdentity(), user.getPassword())

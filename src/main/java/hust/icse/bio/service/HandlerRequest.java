@@ -1,15 +1,10 @@
 package hust.icse.bio.service;
 
 public class HandlerRequest {
-	private static HandlerRequest instance;
+	private static HandlerRequest instance = new HandlerRequest();
 
 	public static HandlerRequest getInstance() {
-		if (instance == null) {
-			instance = new HandlerRequest();
-			return instance;
-		} else {
-			return instance;
-		}
+		return instance;
 	}
 
 	public String submit(User user, String workflow) {

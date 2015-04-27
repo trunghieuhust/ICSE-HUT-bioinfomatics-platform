@@ -17,7 +17,7 @@ public class Task implements Runnable {
 	private UUID workflowID;
 	private VM vm;
 	private static String image = "cloud-bio-v2";
-	private static String flavor = "bio.mini";
+	private static String flavor = "m1.small";
 	private User user;
 	private Tool tool;
 
@@ -83,21 +83,16 @@ public class Task implements Runnable {
 		// taskID.toString();
 	}
 
-	public void start() {
-		Thread thread = new Thread(this);
-
-		thread.start();
-		System.err.println(thread.getName());
-	}
 
 	@Override
 	public void run() {
 		state.updateState(State.STILL_BEING_PROCESSED);
 		vm = user.getManager().launchInstance(taskID.toString(), image, flavor);
-		System.out.println("VM ready. ID "+ vm.getID());
+		System.out.println("VM ready. IP " + vm.getFloatingIP());
+//		vm.executeCommand("echo '" + taskID.toString() + "' >> id.txt");
 		result.setResult(vm.executeCommand(getCommand()));
 		System.out.println(result.getResult());
-		user.getManager().terminateInstance(vm);
+		 user.getManager().terminateInstance(vm);
 		state.updateState(State.COMPLETE_SUCCESSFULLY);
 		System.out.println("VM terminated");
 	}
