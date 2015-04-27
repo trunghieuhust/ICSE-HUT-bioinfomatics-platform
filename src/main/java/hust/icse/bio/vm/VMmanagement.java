@@ -1,6 +1,7 @@
 package hust.icse.bio.vm;
 
 import hust.icse.bio.service.User;
+import hust.icse.bio.service.UserManagement;
 
 import java.io.Closeable;
 import java.io.File;
@@ -12,7 +13,9 @@ import java.util.List;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.validator.routines.InetAddressValidator;
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -34,6 +37,7 @@ import org.jclouds.openstack.nova.v2_0.features.ImageApi;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.openstack.nova.v2_0.options.CreateServerOptions;
 import org.jclouds.openstack.v2_0.domain.Resource;
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import com.google.common.io.Closeables;
@@ -97,7 +101,6 @@ public class VMmanagement implements Closeable {
 			}
 		}
 		System.out.println("Waiting for complete booting");
-		// TODO check boot complete
 		while (!checkLogInstance(serverID)) {
 			if (readLogCount < 200) {
 				try {
@@ -313,6 +316,100 @@ public class VMmanagement implements Closeable {
 		}
 	}
 
+	public String getOrCreateFloatingIP(String randomString) {
+		// TODO get a floating IP address
+		String availableIP = this.getAvailableFloatingIP();
+		if (availableIP != null)
+			return availableIP;
+		else {
+			HttpClient httpClient = HttpClientBuilder.create().build();
+			try {
+				String request = "http://192.168.50.12:8774/v2/"
+						+ CloudConfig.bioServiceTenantID + "/os-floating-ips";
+				String token = this.getToken();
+				System.out.println(token);
+				if (token == null) {
+					System.out.println("Null token, Authorize Failed!");
+					return null;
+				} else {
+					HttpPost listFloatingIpRequest = new HttpPost(request);
+					listFloatingIpRequest.addHeader("content-type",
+							"application/json");
+					String json_data = "{\"pool\":\"ext_net\"}";
+					StringEntity params = new StringEntity(json_data);
+					listFloatingIpRequest.setEntity(params);
+					listFloatingIpRequest.addHeader("X-Auth-Token", token);
+					HttpResponse response = httpClient
+							.execute(listFloatingIpRequest);
+					if (response.getStatusLine().getStatusCode() != 200) {
+						return null;
+					} else {
+						JSONObject rootObject = new JSONObject(
+								EntityUtils.toString(response.getEntity()));
+						JSONObject object = rootObject
+								.getJSONObject("floating_ip");
+						return object.getString("ip");
+					}
+				}
+			} catch (ClientProtocolException e) {
+				e.printStackTrace();
+				return null;
+			} catch (IOException e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+	}
+
+	public String getAvailableFloatingIP() {
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		try {
+			String request = "http://192.168.50.12:8774/v2/"
+					+ CloudConfig.bioServiceTenantID + "/os-floating-ips";
+			String token = this.getToken();
+			System.out.println(token);
+			if (token == null) {
+				System.out.println("Null token, Authorize Failed!");
+				return null;
+			} else {
+				HttpGet listFloatingIpRequest = new HttpGet(request);
+				listFloatingIpRequest.addHeader("content-type",
+						"application/json");
+				listFloatingIpRequest.addHeader("X-Auth-Token", token);
+				HttpResponse response = httpClient
+						.execute(listFloatingIpRequest);
+
+				if (response.getStatusLine().getStatusCode() != 200) {
+					System.out
+							.println(response.getStatusLine().getStatusCode());
+					System.out.println(response);
+					return null;
+				} else {
+					JSONObject rootObject = new JSONObject(
+							EntityUtils.toString(response.getEntity()));
+					JSONArray array = rootObject.getJSONArray("floating_ips");
+					for (int i = 0; i < array.length(); i++) {
+						JSONObject object = array.getJSONObject(i);
+						// System.out
+						// .println(object.get("instance_id").toString());
+						// System.out.println(object.get("ip").toString());
+						if (object.get("instance_id").toString().equals("null"))
+							return object.get("ip").toString();
+						else
+							continue;
+					}
+					return null;
+				}
+			}
+		} catch (ClientProtocolException e) {
+			e.printStackTrace();
+			return null;
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
 	public String getFloatingIP(String serverId) {
 		ServerApi serverApi = context.novaApi
 				.getServerApiForZone(context.defaultZone);
@@ -343,4 +440,12 @@ public class VMmanagement implements Closeable {
 		Closeables.close(context.novaApi, true);
 	}
 
+	public static void main(String[] args) {
+		User user = UserManagement.getInstance().login("ducdmk55",
+				"ducdmk55@123");
+		VMmanagement manager = user.getManager();
+		System.out.println(manager.getOrCreateFloatingIP("abc"));
+		// System.out.println(manager
+		// .getInstanceLog("d83d65d9-c964-4d9c-86d0-db91b1c91a29"));
+	}
 }
