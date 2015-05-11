@@ -67,17 +67,6 @@ public class VMmanagement implements Closeable {
 		}
 	}
 
-	public Long caculateUpTime(String id) {
-		ServerApi serverApi = context.novaApi
-				.getServerApiForZone(context.defaultZone);
-		Server server = serverApi.get(id);
-		// System.out.println(server.getCreated().getTime());
-		// System.out.println(System.currentTimeMillis());
-		Long duration = (System.currentTimeMillis() - server.getCreated()
-				.getTime()) / 1000;
-		// System.out.println("duration:" + duration / 1000 + " seconds");
-		return duration;
-	}
 
 	public VM launchInstance(String name, String image, String flavor) {
 		int timeoutCounting = 0;
@@ -460,10 +449,9 @@ public class VMmanagement implements Closeable {
 		Closeables.close(context.novaApi, true);
 	}
 
-	public static void main(String[] args) {
-		User user = new User("ducdmk55", "ducdmk55@123");
-		System.out.println(user.getManager().caculateUpTime(
-				"68187912-330e-4d67-b23d-139f7fe91934"));
-		;
-	}
+	// public static void main(String[] args) {
+	// User user = new User("ducdmk55", "ducdmk55@123");
+	// System.out.println(user.getManager().caculateUpTime(
+	// "68187912-330e-4d67-b23d-139f7fe91934"));
+	// }
 }
