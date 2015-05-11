@@ -1,6 +1,8 @@
 package hust.icse.bio.vm;
 
 import org.jclouds.compute.domain.ExecResponse;
+import org.jclouds.openstack.nova.v2_0.domain.Server;
+import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.ssh.SshClient;
 
 import com.google.common.net.HostAndPort;
@@ -46,6 +48,18 @@ public class VM {
 			System.out.println("Authentication Fail");
 			return ("ssh fail");
 		}
+	}
+
+	public Long getUpTime() {
+		ServerApi serverApi = context.novaApi
+				.getServerApiForZone(context.defaultZone);
+		Server server = serverApi.get(this.ID);
+		// System.out.println(server.getCreated().getTime());
+		// System.out.println(System.currentTimeMillis());
+		Long duration = (System.currentTimeMillis() - server.getCreated()
+				.getTime()) / 1000;
+		// System.out.println("duration:" + duration / 1000 + " seconds");
+		return duration;
 	}
 
 	public void runInitScript() {

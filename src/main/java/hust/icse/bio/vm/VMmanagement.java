@@ -67,6 +67,7 @@ public class VMmanagement implements Closeable {
 		}
 	}
 
+
 	public VM launchInstance(String name, String image, String flavor) {
 		int timeoutCounting = 0;
 		int readLogCount = 0;
@@ -85,7 +86,7 @@ public class VMmanagement implements Closeable {
 			System.err.println("start synchronized.");
 			floatingIP = getOrCreateFloatingIP();
 			System.err.println("attaching IP " + floatingIP);
-//			System.out.println("Waiting for server booting....");
+			// System.out.println("Waiting for server booting....");
 
 			while (!attachIP(floatingIP, serverID)) {
 				if (timeoutCounting < 200) {
@@ -321,7 +322,6 @@ public class VMmanagement implements Closeable {
 	// }
 
 	public String getOrCreateFloatingIP() {
-		// TODO get a floating IP address
 		String availableIP = getAvailableFloatingIP();
 
 		if (availableIP != null) {
@@ -332,7 +332,7 @@ public class VMmanagement implements Closeable {
 				String request = "http://192.168.50.12:8774/v2/"
 						+ CloudConfig.bioServiceTenantID + "/os-floating-ips";
 				String token = this.getToken();
-//				System.out.println(token);
+				// System.out.println(token);
 				if (token == null) {
 					System.out.println("Null token, Authorize Failed!");
 					return null;
@@ -376,7 +376,7 @@ public class VMmanagement implements Closeable {
 			String request = "http://192.168.50.12:8774/v2/"
 					+ CloudConfig.bioServiceTenantID + "/os-floating-ips";
 			String token = this.getToken();
-//			System.out.println(token);
+			// System.out.println(token);
 			if (token == null) {
 				System.out.println("Null token, Authorize Failed!");
 				return null;
@@ -449,4 +449,9 @@ public class VMmanagement implements Closeable {
 		Closeables.close(context.novaApi, true);
 	}
 
+	// public static void main(String[] args) {
+	// User user = new User("ducdmk55", "ducdmk55@123");
+	// System.out.println(user.getManager().caculateUpTime(
+	// "68187912-330e-4d67-b23d-139f7fe91934"));
+	// }
 }
