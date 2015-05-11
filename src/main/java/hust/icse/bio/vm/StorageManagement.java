@@ -43,7 +43,8 @@ public class StorageManagement implements Closeable {
 		String OBJECT_NAME = "ducdmk55.pem";
 		StorageManagement jcloudsSwift = new StorageManagement(new User(
 				"ducdmk55", "ducdmk55@123"));
-		jcloudsSwift.deleteContainer("abcabc");
+		jcloudsSwift.deleteAll();
+		jcloudsSwift.close();
 	}
 
 	public StorageManagement(User user) {
@@ -163,6 +164,22 @@ public class StorageManagement implements Closeable {
 		for (Container container : containers) {
 			System.out.println("  " + container);
 		}
+	}
+
+	public void deleteAll() {
+		System.out.println("List Containers");
+
+		ContainerApi containerApi = swiftApi.getContainerApi(this.defaultZone);
+		Set<Container> containers = containerApi.list().toSet();
+
+		for (Container container : containers) {
+			if (container.getName().length() == 36) {
+
+				System.out.println("delete:" + container.getName() + " "
+						+ this.deleteContainer(container.getName()));
+			}
+		}
+		System.out.println("Done");
 	}
 
 	/**
