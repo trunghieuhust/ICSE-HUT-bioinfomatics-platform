@@ -1,10 +1,24 @@
 package hust.icse.bio.service;
 
+import javax.jws.WebMethod;
+import javax.jws.WebParam;
+import javax.jws.WebService;
+
+@WebService(name = "bio", targetNamespace = "http://service.bio.icse.hust/")
 public interface BioService {
+	@WebMethod
+	public String submit(@WebParam(name = "username") String username,
+			@WebParam(name = "password") String password,
+			@WebParam(name = "workflow") String workflow);
 
-	public String submit(String username, String password, String workflow);
+	@WebMethod
+	public String getResult(@WebParam(name = "username") String username,
+			@WebParam(name = "password") String password,
+			@WebParam(name = "ID") String ID);
 
-	public String getResult(String username, String password, String ID);
+	@WebMethod
+	public Status getStatus(@WebParam(name = "ID") String ID);
 
-	public int getStatus(String ID);
+	@WebMethod
+	public String getAllID(@WebParam(name = "workflowID") String workflowID);
 }

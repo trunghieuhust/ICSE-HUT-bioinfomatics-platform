@@ -1,13 +1,13 @@
 package hust.icse.bio.service;
 
 public class State {
-	public static int UNKNOWN_STATE = 0;
-	public static int STOP_WITH_ERROR = 1;
-	public static int COMPLETE_SUCCESSFULLY = 2;
-	public static int STILL_BEING_PROCESSED = 3;
-	public static int NOT_FOUND = 4;
-	public static int QUEUEING = 5;
-	private static String[] DESCRIPTION = {
+	public static final int UNKNOWN_STATE = 0;
+	public static final int STOP_WITH_ERROR = 1;
+	public static final int COMPLETE_SUCCESSFULLY = 2;
+	public static final int STILL_BEING_PROCESSED = 3;
+	public static final int NOT_FOUND = 4;
+	public static final int QUEUEING = 5;
+	private static final String[] DESCRIPTION = {
 			"unknowing state",
 			"has stopped in an error state, check the message field",
 			"completed successfully, the appropriate results fields will contain data",
@@ -21,7 +21,7 @@ public class State {
 	}
 
 	public State(int jobStateCode) {
-		if (jobStateCode >= 0 && jobStateCode <= 4) {
+		if (jobStateCode >= 0 && jobStateCode <= 5) {
 			currentState = jobStateCode;
 		} else {
 			currentState = UNKNOWN_STATE;
@@ -36,8 +36,16 @@ public class State {
 		return DESCRIPTION[currentState];
 	}
 
+	public static String getDescription(int stateCode) {
+		if (stateCode >= 0 && stateCode <= 5) {
+			return DESCRIPTION[stateCode];
+		} else {
+			return DESCRIPTION[UNKNOWN_STATE];
+		}
+	}
+
 	public boolean updateState(int jobStateCode) {
-		if (jobStateCode >= 0 && jobStateCode <= 4) {
+		if (jobStateCode >= 0 && jobStateCode <= 5) {
 			currentState = jobStateCode;
 			return true;
 		} else

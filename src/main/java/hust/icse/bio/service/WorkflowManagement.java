@@ -3,23 +3,19 @@ package hust.icse.bio.service;
 import hust.icse.bio.utils.UUIDGenerator;
 
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 import java.util.UUID;
 
 public class WorkflowManagement {
-	private static HashMap<UUID, Workflow> workflowManager;
-	private static WorkflowManagement instance;
+	private static HashMap<UUID, Workflow> workflowManager = new HashMap<UUID, Workflow>();
+	private static WorkflowManagement instance = new WorkflowManagement();
 
 	public WorkflowManagement() {
-		workflowManager = new HashMap<UUID, Workflow>();
 	}
 
 	public static WorkflowManagement getInstance() {
-		if (instance == null) {
-			instance = new WorkflowManagement();
-			return instance;
-		} else {
-			return instance;
-		}
+		return instance;
 	}
 
 	public String createWorkflow(User user, String workflow) {
@@ -29,6 +25,12 @@ public class WorkflowManagement {
 		workflowManager.put(workflowID, newWorkflow);
 		Thread thread = new Thread(newWorkflow);
 		thread.start();
+		try {
+			thread.join(0);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		return workflowID.toString();
 
 	}
@@ -43,36 +45,33 @@ public class WorkflowManagement {
 		return "Job not found";
 	}
 
-	public int getState(String ID) {
+	public Status getStatus(String ID) {
 		Workflow workflow = null;
 		UUID uuid = UUIDGenerator.UUIDfromString(ID);
 		if (workflowManager.containsKey(uuid)) {
 			workflow = (Workflow) workflowManager.get(uuid);
-			return workflow.getStateCode();
+			return workflow.getStatus();
 		} else {
-			return -1;
+			Status status = new Status("Not found", ID,
+					State.getDescription(State.NOT_FOUND), State.NOT_FOUND);
+			System.err.println("Not found. ID: " + ID);
+			System.err.println("WF size: " + workflowManager.size());
+			Set<UUID> set = workflowManager.keySet();
+			for (Iterator iterator = set.iterator(); iterator.hasNext();) {
+				UUID uuid2 = (UUID) iterator.next();
+				System.err.println(uuid2.toString());
+			}
+			return status;
 		}
 	}
 
-	public String getFullState(String ID) {
-		Workflow workflow = null;
-		UUID uuid = UUIDGenerator.UUIDfromString(ID);
-		if (workflowManager.containsKey(uuid)) {
-			workflow = (Workflow) workflowManager.get(uuid);
-			return workflow.getFullState();
-		} else {
-			return "null";
-		}
-
-	}
-
-//	public Job getTask(String jobID) {
-//		Job job = null;
-//		UUID uuid = UUIDGenerator.UUIDfromString(jobID);
-//		if (workflowManager.containsKey(uuid)) {
-//			// job = (Job) workflowManager.get(uuid);
-//		}
-//		return job;
-//
-//	}
+	// public Job getTask(String jobID) {
+	// Job job = null;
+	// UUID uuid = UUIDGenerator.UUIDfromString(jobID);
+	// if (workflowManager.containsKey(uuid)) {
+	// // job = (Job) workflowManager.get(uuid);
+	// }
+	// return job;
+	//
+	// }
 }

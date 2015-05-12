@@ -14,7 +14,8 @@ public class HandlerRequest {
 		return workflowID;
 	}
 
-	// public String getState(User user, String ID) {
-	//
-	// }
+	public Status getStatus(String ID) {
+		Status status = WorkflowManagement.getInstance().getStatus(ID);
+		return status;
+	}
 }

@@ -1,11 +1,17 @@
 package hust.icse.bio.service;
 
-/**
- * Hello world!
- *
- */
-public class BioServiceImpl implements BioService {
+import java.util.logging.Level;
 
+import javax.jws.WebService;
+
+import org.apache.cxf.common.logging.Slf4jLogger;
+
+@WebService(endpointInterface = "hust.icse.bio.service.BioService")
+public class BioServiceImpl implements BioService {
+	static{
+		Slf4jLogger.getGlobal().setLevel(Level.OFF);
+	}
+	@Override
 	public String submit(String username, String password, String workflow) {
 		String ID = "";
 		User user = UserManagement.getInstance().login(username, password);
@@ -17,14 +23,20 @@ public class BioServiceImpl implements BioService {
 		}
 	}
 
+	@Override
 	public String getResult(String username, String password, String ID) {
-
+		
 		return null;
 	}
 
-	public int getStatus(String ID) {
-		int status = -1;
-		status = WorkflowManagement.getInstance().getState(ID);
-		return status;
+	@Override
+	public Status getStatus(String ID) {
+		return HandlerRequest.getInstance().getStatus(ID);
 	}
+
+	@Override
+	public String getAllID(String workflowID) {
+		return null;
+	}
+	
 }

@@ -1,32 +1,23 @@
 package hust.icse.bio.service;
 
 public class TaskResult {
-	private State state;
-	private String result;
+	private String outputConsole;
+	private String outputURL[];
 
 	public TaskResult() {
-		state = new State();
-		result = "";
+		outputConsole = "";
 	}
 
-	public int getStateCode() {
-		return state.getState();
+	public String getOutputConsole() {
+		return outputConsole;
 	}
 
-	public String getStateDescription() {
-		return state.getDescription();
+	public String[] getOutputFile() {
+		return outputURL;
 	}
 
-	public String getResult() {
-		return result;
-	}
-
-	public boolean updateState(int stateCode) {
-		return state.updateState(stateCode);
-	}
-
-	public boolean setResult(String jobResult) {
-		this.result = jobResult;
+	public boolean setOutputConsole(String OutputConsole) {
+		this.outputConsole = OutputConsole;
 		return true;
 	}
 }

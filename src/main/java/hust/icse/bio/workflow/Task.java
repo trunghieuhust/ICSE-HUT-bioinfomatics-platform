@@ -2,6 +2,7 @@ package hust.icse.bio.workflow;
 
 import hust.icse.bio.service.State;
 import hust.icse.bio.service.TaskResult;
+import hust.icse.bio.service.TaskStatus;
 import hust.icse.bio.service.User;
 import hust.icse.bio.vm.VM;
 
@@ -12,7 +13,8 @@ public class Task implements Runnable {
 	private String inputFile;
 	private String outputFile;
 	private TaskResult result;
-	private State state;
+	private String name;
+	private TaskStatus status;
 	private UUID taskID;
 	private UUID workflowID;
 	private VM vm;
@@ -24,7 +26,7 @@ public class Task implements Runnable {
 	// TODO input output nhieu file.
 	public Task() {
 		result = new TaskResult();
-		state = new State();
+		status = new TaskStatus();
 	}
 
 	public String getToolAlias() {
@@ -35,16 +37,20 @@ public class Task implements Runnable {
 		return inputFile;
 	}
 
+	public String getID() {
+		return taskID.toString();
+	}
+
 	public String outputFile() {
 		return outputFile;
 	}
 
-	public State getState() {
-		return state;
+	public TaskStatus getStatus() {
+		return status;
 	}
 
-	public boolean updateState(int stateCode) {
-		return state.updateState(stateCode);
+	public boolean updateStatus(int statusCode) {
+		return status.updateStatus(statusCode);
 	}
 
 	public void setAlias(String alias) {
@@ -67,6 +73,14 @@ public class Task implements Runnable {
 		this.workflowID = workflowID;
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 	public void setID(UUID taskID) {
 		this.taskID = taskID;
 	}
@@ -77,23 +91,22 @@ public class Task implements Runnable {
 
 	@Override
 	public String toString() {
-		return "Task:" + "\n\t Alias: " + toolAlias + "\n\t Input: "
-				+ inputFile + "\n\tOutput: " + outputFile;
+		return "Task:" + "\n\t Name: " + name + "\n\t Alias: " + toolAlias
+				+ "\n\t Input: " + inputFile + "\n\tOutput: " + outputFile;
 		// return "\n\tTask : " + toolAlias + "\n\tTaskID: " +
 		// taskID.toString();
 	}
 
-
 	@Override
 	public void run() {
-		state.updateState(State.STILL_BEING_PROCESSED);
+		status.updateStatus(State.STILL_BEING_PROCESSED);
 		vm = user.getManager().launchInstance(taskID.toString(), image, flavor);
 		System.out.println("VM ready. IP " + vm.getFloatingIP());
-//		vm.executeCommand("echo '" + taskID.toString() + "' >> id.txt");
-		result.setResult(vm.executeCommand(getCommand()));
-		System.out.println(result.getResult());
-		 user.getManager().terminateInstance(vm);
-		state.updateState(State.COMPLETE_SUCCESSFULLY);
+		// vm.executeCommand("echo '" + taskID.toString() + "' >> id.txt");
+		result.setOutputConsole(vm.executeCommand(getCommand()));
+		System.out.println(result.getOutputConsole());
+		user.getManager().terminateInstance(vm);
+		status.updateStatus(State.COMPLETE_SUCCESSFULLY);
 		System.out.println("VM terminated");
 	}
 

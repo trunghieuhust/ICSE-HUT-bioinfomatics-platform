@@ -17,21 +17,24 @@ public class Workflow implements Runnable {
 	private HashMap<UUID, Task> taskManager;
 	private UUID workflowID;
 	private User user;
-	private State state;
-
-	private final static String TEST = "<workflow><activities><activity name='aligment'><task><tool-alias>clustal</tool-alias><input-files input='input'></input-files><output-files output='output'></output-files></task><task><tool-alias>clustalo2</tool-alias><input-files input='input'></input-files><output-files output='output3'></output-files></task><task><tool-alias>clustalo3</tool-alias><input-files input='input'></input-files><output-files output='output4'></output-files></task></activity><activity name='fasttree'><task><tool-alias>fasttree</tool-alias><input-files input='output'></input-files><output-files output='output-fasttree'></output-files></task></activity></activities></workflow><tools><tool><alias>clustal</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool><alias>clustalo2</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
+	private Status status;
+	private String name;
+	private final static String TEST = "<workflow name='2step'><activities><activity name='aligment'><task name='clusltal'><tool-alias>clustal</tool-alias><input-files input='input'></input-files><output-files output='output'></output-files></task><task name='clustal'><tool-alias>clustalo2</tool-alias><input-files input='input'></input-files><output-files output='output3'></output-files></task></activity><activity name='fasttree'><task clustal='fasttree'><tool-alias>fasttree</tool-alias><input-files input='output'></input-files><output-files output='output-fasttree'></output-files></task></activity></activities></workflow><tools><tool><alias>clustal</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool><alias>clustalo2</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
 
 	public Workflow(User user, String workflow, UUID workflowID) {
 		// TODO validate workflow
 		this.rawWorkflow = workflow;
 		this.workflowID = workflowID;
 		this.user = user;
+		this.name = WorkFlowUtils.getInstance().getWorkflowName(workflow);
+		this.status = new Status(name, workflowID.toString(),
+				State.getDescription(State.QUEUEING), State.QUEUEING);
 		activityList = WorkFlowUtils.getInstance().parse(workflow);
 		activityManager = new HashMap<UUID, Activity>();
 		taskManager = new HashMap<UUID, Task>();
-		state = new State(State.UNKNOWN_STATE);
 		assignID();
 		assignTool();
+		System.err.println(status.toString());
 	}
 
 	private void assignTool() {
@@ -54,28 +57,32 @@ public class Workflow implements Runnable {
 		for (Activity activity : activityList) {
 			UUID activityID = UUIDGenerator.nextUUID();
 			activity.setUser(user);
-			activity.updateState(State.QUEUEING);
 			activity.setID(activityID);
 			activityManager.put(activityID, activity);
 			ArrayList<Task> taskList = activity.getTaskList();
+			status.addToActivityStatusList(activity.getStatus());
 			for (Task task : taskList) {
 				UUID taskID = UUIDGenerator.nextUUID();
 				taskManager.put(taskID, task);
 				task.setID(taskID);
 				task.setWorkflowID(workflowID);
+				task.getStatus().setID(task.getID());
+				task.getStatus().setName(task.getName());
 			}
 		}
+
 	}
 
 	@Override
 	public void run() {
-		state.updateState(State.STILL_BEING_PROCESSED);
+		status.setStatusCode(State.STILL_BEING_PROCESSED);
 		user.getStorageManagement().createContainer(workflowID.toString());
 		for (Task task : activityList.get(0).getTaskList()) {
 			user.getStorageManagement().copyFileToOtherContainer(
 					task.getInputFile(),
 					user.getStorageManagement().getUploadContainer(),
 					workflowID.toString());
+
 		}
 		for (Activity activity : activityList) {
 			System.out.println("Activity " + activity.getName()
@@ -84,27 +91,33 @@ public class Workflow implements Runnable {
 			activity.start();
 		}
 		System.out.println("Activity done.");
-		state.updateState(State.COMPLETE_SUCCESSFULLY);
+		status.setStatusCode(State.COMPLETE_SUCCESSFULLY);
 	}
 
-	public int getStateCode() {
-		return state.getState();
+	public int getStatusCode() {
+		return status.getStatusCode();
 	}
 
-	public String getFullState() {
-		StringBuilder sb = new StringBuilder();
-		for (Activity activity : activityList) {
-			sb.append(activity.toString());
-		}
-		return sb.toString();
+	public Status getStatus() {
+		return status;
 	}
 
-	public static void main(String[] args) {
-		User user = UserManagement.getInstance().login("ducdmk55",
-				"ducdmk55@123");
-		Thread thread = new Thread(new Workflow(user, TEST,
-				UUIDGenerator.nextUUID()));
-		thread.start();
+	// public String getFullState() {
+	// StringBuilder sb = new StringBuilder();
+	// for (Activity activity : activityList) {
+	// sb.append(activity.toString());
+	// }
+	// return sb.toString();
+	// }
+
+	public void test() {
 	}
 
+//	public static void main(String[] args) {
+//		User user = UserManagement.getInstance().login("ducdmk55",
+//				"ducdmk55@123");
+//		Workflow wf = new Workflow(user, TEST, UUIDGenerator.nextUUID());
+//		Thread thread = new Thread(wf);
+//		 thread.start();
+//	}
 }

@@ -1,5 +1,6 @@
 package hust.icse.bio.workflow;
 
+import hust.icse.bio.service.ActivityStatus;
 import hust.icse.bio.service.State;
 import hust.icse.bio.service.User;
 
@@ -11,13 +12,13 @@ public class Activity {
 	private String name;
 	private ArrayList<Task> taskList;
 	private User user;
-	private State state;
+	private ActivityStatus status;
 	private UUID ID;
 
 	public Activity(String name) {
 		this.name = name;
 		taskList = new ArrayList<Task>();
-		state = new State();
+		status = new ActivityStatus(name);
 	}
 
 	public boolean insertTask(Task task) {
@@ -38,27 +39,23 @@ public class Activity {
 
 	public void setID(UUID activityID) {
 		ID = activityID;
+		status.setID(ID.toString());
 	}
 
 	public UUID getID() {
 		return ID;
 	}
 
-	public boolean updateState(int stateCode) {
-		boolean update = state.updateState(stateCode);
-		if (update == true) {
-			for (Task task : taskList) {
-				task.updateState(stateCode);
-			}
-			return true;
-		} else {
-			return false;
-		}
+	public ActivityStatus getStatus() {
+		return status;
 	}
 
 	public boolean insertMultipleTask(List<Task> taskList) {
 		if (taskList != null && taskList.size() != 0) {
 			this.taskList.addAll(taskList);
+			for (Task task : taskList) {
+				status.addToTaskStatusList(task.getStatus());
+			}
 			return true;
 		} else {
 			return false;
@@ -93,6 +90,7 @@ public class Activity {
 	}
 
 	public void start() {
+		status.setStatusCode(State.STILL_BEING_PROCESSED);
 		for (Task task : taskList) {
 			Thread taskThread = new Thread(task);
 			taskThread.start();
@@ -102,7 +100,7 @@ public class Activity {
 		while (running) {
 			for (Task task : taskList) {
 				running = running
-						&& (task.getState().getState() != State.COMPLETE_SUCCESSFULLY);
+						&& (task.getStatus().getStatusCode() != State.COMPLETE_SUCCESSFULLY);
 			}
 			try {
 				Thread.sleep(1000);
@@ -111,6 +109,6 @@ public class Activity {
 			}
 		}
 		System.out.println("All done.");
-		state.updateState(State.COMPLETE_SUCCESSFULLY);
+		status.setStatusCode(State.COMPLETE_SUCCESSFULLY);
 	}
 }
