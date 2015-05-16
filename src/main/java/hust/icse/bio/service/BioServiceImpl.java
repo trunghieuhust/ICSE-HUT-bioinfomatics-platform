@@ -8,9 +8,10 @@ import org.apache.cxf.common.logging.Slf4jLogger;
 
 @WebService(endpointInterface = "hust.icse.bio.service.BioService")
 public class BioServiceImpl implements BioService {
-	static{
+	static {
 		Slf4jLogger.getGlobal().setLevel(Level.OFF);
 	}
+
 	@Override
 	public String submit(String username, String password, String workflow) {
 		String ID = "";
@@ -24,9 +25,12 @@ public class BioServiceImpl implements BioService {
 	}
 
 	@Override
-	public String getResult(String username, String password, String ID) {
-		
-		return null;
+	public TaskResult getResult(String username, String password, String ID) {
+		if (login(username, password) == true) {
+			return HandlerRequest.getInstance().getTaskResult(ID);
+		} else {
+			return null;
+		}
 	}
 
 	@Override
@@ -38,5 +42,15 @@ public class BioServiceImpl implements BioService {
 	public String getAllID(String workflowID) {
 		return null;
 	}
-	
+
+	@Override
+	public boolean login(String username, String password) {
+		User user = UserManagement.getInstance().login(username, password);
+		if (user == null) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+
 }

@@ -1,12 +1,17 @@
 package hust.icse.bio.service;
 
-import hust.icse.bio.utils.UUIDGenerator;
+import hust.icse.bio.dao.DAOFactory;
+import hust.icse.bio.dao.MySQLDAOFactory;
+import hust.icse.bio.dao.WorkflowDAO;
+import hust.icse.bio.utils.UUIDultis;
 import hust.icse.bio.workflow.Activity;
 import hust.icse.bio.workflow.Task;
 import hust.icse.bio.workflow.Tool;
 import hust.icse.bio.workflow.WorkFlowUtils;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -19,7 +24,10 @@ public class Workflow implements Runnable {
 	private User user;
 	private Status status;
 	private String name;
-	private final static String TEST = "<workflow name='2step'><activities><activity name='aligment'><task name='clusltal'><tool-alias>clustal</tool-alias><input-files input='input'></input-files><output-files output='output'></output-files></task><task name='clustal'><tool-alias>clustalo2</tool-alias><input-files input='input'></input-files><output-files output='output3'></output-files></task></activity><activity name='fasttree'><task clustal='fasttree'><tool-alias>fasttree</tool-alias><input-files input='output'></input-files><output-files output='output-fasttree'></output-files></task></activity></activities></workflow><tools><tool><alias>clustal</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool><alias>clustalo2</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
+	private Date createdTime;
+	private Date finishedTime;
+	private final static String TEST = "<workflow name='2step'><activities><activity name='aligment'><task name='clustal1'><tool-alias>clustal</tool-alias><input-files input='actin'></input-files><output-files output='output1'></output-files></task><task name='clustal2'><tool-alias>clustalo2</tool-alias><input-files input='actin'></input-files><output-files output='output2'></output-files></task></activity><activity name='fasttree'><task name='fasttree'><tool-alias>fasttree</tool-alias><input-files input='output2'></input-files><output-files output='output-fasttree'></output-files></task></activity></activities></workflow><tools><tool><alias>clustal</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool><alias>clustalo2</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
+	private WorkflowDAO workflowDAO;
 
 	public Workflow(User user, String workflow, UUID workflowID) {
 		// TODO validate workflow
@@ -32,6 +40,9 @@ public class Workflow implements Runnable {
 		activityList = WorkFlowUtils.getInstance().parse(workflow);
 		activityManager = new HashMap<UUID, Activity>();
 		taskManager = new HashMap<UUID, Task>();
+		workflowDAO = DAOFactory.getDAOFactory(DAOFactory.MYSQL)
+				.getWorkflowDAO();
+
 		assignID();
 		assignTool();
 		System.err.println(status.toString());
@@ -55,16 +66,17 @@ public class Workflow implements Runnable {
 
 	private void assignID() {
 		for (Activity activity : activityList) {
-			UUID activityID = UUIDGenerator.nextUUID();
+			UUID activityID = UUIDultis.nextUUID();
 			activity.setUser(user);
 			activity.setID(activityID);
 			activityManager.put(activityID, activity);
 			ArrayList<Task> taskList = activity.getTaskList();
 			status.addToActivityStatusList(activity.getStatus());
 			for (Task task : taskList) {
-				UUID taskID = UUIDGenerator.nextUUID();
+				UUID taskID = UUIDultis.nextUUID();
 				taskManager.put(taskID, task);
 				task.setID(taskID);
+				task.setActivityID(activityID);
 				task.setWorkflowID(workflowID);
 				task.getStatus().setID(task.getID());
 				task.getStatus().setName(task.getName());
@@ -75,6 +87,7 @@ public class Workflow implements Runnable {
 
 	@Override
 	public void run() {
+		createdTime = Calendar.getInstance().getTime();
 		status.setStatusCode(State.STILL_BEING_PROCESSED);
 		user.getStorageManagement().createContainer(workflowID.toString());
 		for (Task task : activityList.get(0).getTaskList()) {
@@ -91,6 +104,10 @@ public class Workflow implements Runnable {
 			activity.start();
 		}
 		System.out.println("Activity done.");
+		finishedTime = Calendar.getInstance().getTime();
+		System.err.println(createdTime.toString());
+		System.err.println(finishedTime.toString());
+		workflowDAO.insertWorkflow(this);
 		status.setStatusCode(State.COMPLETE_SUCCESSFULLY);
 	}
 
@@ -102,6 +119,30 @@ public class Workflow implements Runnable {
 		return status;
 	}
 
+	public User getUser() {
+		return user;
+	}
+
+	public String getRawWorkflow() {
+		return rawWorkflow;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public UUID getID() {
+		return workflowID;
+	}
+
+	public Date getCreatedTime() {
+		return createdTime;
+	}
+
+	public Date getFinishedTime() {
+		return finishedTime;
+	}
+
 	// public String getFullState() {
 	// StringBuilder sb = new StringBuilder();
 	// for (Activity activity : activityList) {
@@ -110,14 +151,11 @@ public class Workflow implements Runnable {
 	// return sb.toString();
 	// }
 
-	public void test() {
+	public static void main(String[] args) {
+		User user = UserManagement.getInstance().login("ducdmk55",
+				"ducdmk55@123");
+		Workflow wf = new Workflow(user, TEST, UUIDultis.nextUUID());
+		Thread thread = new Thread(wf);
+		 thread.start();
 	}
-
-//	public static void main(String[] args) {
-//		User user = UserManagement.getInstance().login("ducdmk55",
-//				"ducdmk55@123");
-//		Workflow wf = new Workflow(user, TEST, UUIDGenerator.nextUUID());
-//		Thread thread = new Thread(wf);
-//		 thread.start();
-//	}
 }

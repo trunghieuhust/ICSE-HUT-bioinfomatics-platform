@@ -12,7 +12,11 @@ public interface BioService {
 			@WebParam(name = "workflow") String workflow);
 
 	@WebMethod
-	public String getResult(@WebParam(name = "username") String username,
+	public boolean login(@WebParam(name = "username") String username,
+			@WebParam(name = "password") String password);
+
+	@WebMethod
+	public TaskResult getResult(@WebParam(name = "username") String username,
 			@WebParam(name = "password") String password,
 			@WebParam(name = "ID") String ID);
 

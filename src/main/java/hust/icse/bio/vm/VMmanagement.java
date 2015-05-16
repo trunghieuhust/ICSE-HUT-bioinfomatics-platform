@@ -58,7 +58,7 @@ public class VMmanagement implements Closeable {
 	public void listServers() {
 		for (String zone : context.zones) {
 			ServerApi serverApi = context.novaApi.getServerApiForZone(zone);
-
+			
 			System.out.println("Servers in " + zone);
 
 			for (Server server : serverApi.listInDetail().concat()) {
@@ -83,10 +83,8 @@ public class VMmanagement implements Closeable {
 		String serverID = ser.getId();
 
 		synchronized (LockObject.getInstance()) {
-			System.err.println("start synchronized.");
 			floatingIP = getOrCreateFloatingIP();
 			System.err.println("attaching IP " + floatingIP);
-			// System.out.println("Waiting for server booting....");
 
 			while (!attachIP(floatingIP, serverID)) {
 				if (timeoutCounting < 200) {
@@ -103,13 +101,12 @@ public class VMmanagement implements Closeable {
 					return null;
 				}
 			}
-			System.err.println("end synchronized.");
+			System.err.println("IP attached.");
 		}
 		System.out.println("Waiting for complete booting");
 		while (!checkLogInstance(serverID)) {
 			if (readLogCount < 200) {
 				try {
-					// System.out.println(readLogCount);
 					Thread.sleep(500);
 					readLogCount++;
 				} catch (InterruptedException e) {
@@ -139,7 +136,7 @@ public class VMmanagement implements Closeable {
 		}
 
 	}
-
+	
 	public boolean checkLogInstance(String serverID) {
 		String log = this.getInstanceLog(serverID);
 		if (log == null)

@@ -1,11 +1,16 @@
 package hust.icse.bio.workflow;
 
+import hust.icse.bio.dao.DAOFactory;
 import hust.icse.bio.service.State;
 import hust.icse.bio.service.TaskResult;
 import hust.icse.bio.service.TaskStatus;
 import hust.icse.bio.service.User;
+import hust.icse.bio.service.WorkflowManagement;
 import hust.icse.bio.vm.VM;
 
+import java.sql.Time;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.UUID;
 
 public class Task implements Runnable {
@@ -17,11 +22,15 @@ public class Task implements Runnable {
 	private TaskStatus status;
 	private UUID taskID;
 	private UUID workflowID;
+	private UUID activityID;
 	private VM vm;
 	private static String image = "cloud-bio-v2";
 	private static String flavor = "m1.small";
 	private User user;
 	private Tool tool;
+	private Date created_at;
+	private Date finished_at;
+	private long duration;
 
 	// TODO input output nhieu file.
 	public Task() {
@@ -35,6 +44,18 @@ public class Task implements Runnable {
 
 	public String getInputFile() {
 		return inputFile;
+	}
+
+	public Date getCreated_at() {
+		return created_at;
+	}
+
+	public Date getFinished_at() {
+		return finished_at;
+	}
+
+	public long getDuration() {
+		return duration;
 	}
 
 	public String getID() {
@@ -73,8 +94,24 @@ public class Task implements Runnable {
 		this.workflowID = workflowID;
 	}
 
+	public void setActivityID(UUID activityID) {
+		this.activityID = activityID;
+	}
+
+	public UUID getActivityID() {
+		return activityID;
+	}
+
+	public UUID getWorkflowID() {
+		return workflowID;
+	}
+
 	public String getName() {
 		return name;
+	}
+
+	public Tool getTool() {
+		return tool;
 	}
 
 	public void setName(String name) {
@@ -89,6 +126,10 @@ public class Task implements Runnable {
 		this.tool = tool;
 	}
 
+	public TaskResult getResult() {
+		return result;
+	}
+
 	@Override
 	public String toString() {
 		return "Task:" + "\n\t Name: " + name + "\n\t Alias: " + toolAlias
@@ -99,25 +140,49 @@ public class Task implements Runnable {
 
 	@Override
 	public void run() {
+		created_at = Calendar.getInstance().getTime();
 		status.updateStatus(State.STILL_BEING_PROCESSED);
 		vm = user.getManager().launchInstance(taskID.toString(), image, flavor);
 		System.out.println("VM ready. IP " + vm.getFloatingIP());
-		// vm.executeCommand("echo '" + taskID.toString() + "' >> id.txt");
-		result.setOutputConsole(vm.executeCommand(getCommand()));
-		System.out.println(result.getOutputConsole());
+		vm.executeCommand(getCommand());
+		result.setOutputConsole(user.getStorageManagement().getFileLink(
+				name + "_output_console.txt", workflowID.toString()));
+		result.setOutputFile(user.getStorageManagement().getFileLink(
+				outputFile, workflowID.toString()));
+		System.err.println(result.getOutputConsole());
+		System.err.println(result.getOutputFile());
 		user.getManager().terminateInstance(vm);
 		status.updateStatus(State.COMPLETE_SUCCESSFULLY);
+		WorkflowManagement.getInstance().addTaskResult(result, taskID);
+		finished_at = Calendar.getInstance().getTime();
+		result.setDurationTime(vm.getUpTime());
+		duration = vm.getUpTime();
+		DAOFactory.getDAOFactory(DAOFactory.MYSQL).getTaskDAO()
+				.insertTask(this);
 		System.out.println("VM terminated");
 	}
 
 	public String getCommand() {
-		String swiftFolder = "swift-folder/";
-		String folder = swiftFolder + workflowID.toString() + "/";
+		String folder = getSwiftFolder();
 		String command = tool.getName() + " " + tool.getCommand();
 		command = command.replace("$output", folder + outputFile);
-		command = command.replace("$input", folder + inputFile);
+		if (user.getStorageManagement().getFileLink(inputFile,
+				user.getStorageManagement().getUploadContainer()) == null) {
+			command = command.replace("$input", folder + inputFile);
+		} else {
+			command = command.replace("$input", user.getStorageManagement()
+					.getUploadFolder() + "/" + inputFile);
+		}
+		command = command + " &> " + folder + name + "_output_console.txt";
 		System.out.println(command);
 
 		return command;
 	}
+
+	private String getSwiftFolder() {
+		String swiftFolder = "swift-folder/";
+		String folder = swiftFolder + workflowID.toString() + "/";
+		return folder;
+	}
+
 }

@@ -50,14 +50,14 @@ public class VM {
 		}
 	}
 
-	public Long getUpTime() {
+	public long getUpTime() {
 		ServerApi serverApi = context.novaApi
 				.getServerApiForZone(context.defaultZone);
 		Server server = serverApi.get(this.ID);
 		// System.out.println(server.getCreated().getTime());
 		// System.out.println(System.currentTimeMillis());
-		Long duration = (System.currentTimeMillis() - server.getCreated()
-				.getTime()) / 1000;
+		long duration = (System.currentTimeMillis() - server.getCreated()
+				.getTime()) ;
 		// System.out.println("duration:" + duration / 1000 + " seconds");
 		return duration;
 	}

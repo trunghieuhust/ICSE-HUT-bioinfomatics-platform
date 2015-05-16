@@ -269,6 +269,10 @@ public class StorageManagement implements Closeable {
 		return user.getUsername() + "-upload";
 	}
 
+	public String getUploadFolder() {
+		return "swift-folder/" + getUploadContainer();
+	}
+
 	public static StorageManagement getAdminInstance() {
 		if (instance == null) {
 			instance = new StorageManagement();
