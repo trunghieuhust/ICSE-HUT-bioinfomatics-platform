@@ -50,6 +50,12 @@ public class VM {
 		}
 	}
 
+	public String createSnapshot(String imageName) {
+		ServerApi serverApi = context.novaApi
+				.getServerApiForZone(context.defaultZone);
+		return serverApi.createImageFromServer(imageName, this.ID);
+	}
+
 	public long getUpTime() {
 		ServerApi serverApi = context.novaApi
 				.getServerApiForZone(context.defaultZone);
@@ -57,7 +63,7 @@ public class VM {
 		// System.out.println(server.getCreated().getTime());
 		// System.out.println(System.currentTimeMillis());
 		long duration = (System.currentTimeMillis() - server.getCreated()
-				.getTime()) ;
+				.getTime());
 		// System.out.println("duration:" + duration / 1000 + " seconds");
 		return duration;
 	}
