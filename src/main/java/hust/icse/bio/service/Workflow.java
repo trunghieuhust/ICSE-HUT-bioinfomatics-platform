@@ -152,7 +152,7 @@ public class Workflow implements Runnable {
 	// }
 
 	public static void main(String[] args) {
-		User user = UserManagement.getInstance().login("ducdmk55",
+		User user = UserManagement.getInstance().authenticate("ducdmk55",
 				"ducdmk55@123");
 		Workflow wf = new Workflow(user, TEST, UUIDultis.nextUUID());
 		Thread thread = new Thread(wf);

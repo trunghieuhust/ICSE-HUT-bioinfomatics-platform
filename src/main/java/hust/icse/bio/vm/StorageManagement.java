@@ -1,17 +1,18 @@
 package hust.icse.bio.vm;
 
 import hust.icse.bio.service.User;
-
 import static org.jclouds.io.Payloads.newByteSourcePayload;
 
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.util.Iterator;
 import java.util.Set;
 
 import org.jclouds.ContextBuilder;
+import org.jclouds.io.ByteSources;
 import org.jclouds.io.Payload;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.openstack.swift.v1.SwiftApi;
@@ -103,7 +104,6 @@ public class StorageManagement implements Closeable {
 				.getObjectApi(this.defaultZone, container);
 		ByteSource data = Files.asByteSource(new File(filePath));
 		Payload payload = newByteSourcePayload(data);
-
 		objectApi.put(filePath, payload,
 				PutOptions.Builder.metadata(ImmutableMap.of("key1", "value1")));
 

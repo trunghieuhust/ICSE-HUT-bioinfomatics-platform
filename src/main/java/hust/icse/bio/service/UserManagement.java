@@ -37,7 +37,7 @@ public class UserManagement {
 	 * @return User object if authentication successful, null if failed.
 	 * 
 	 */
-	public User login(String username, String password) {
+	public User authenticate(String username, String password) {
 		Optional<? extends UserApi> userApis = keystoneApi.getUserApi();
 		Optional<? extends TenantApi> tenantApis = keystoneApi.getTenantApi();
 		if (userApis.isPresent() && tenantApis.isPresent()) {

@@ -18,6 +18,10 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
+import org.jclouds.compute.ComputeService;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.predicates.OperatingSystemPredicates;
 import org.jclouds.openstack.neutron.v2.domain.Network;
 import org.jclouds.openstack.neutron.v2.features.NetworkApi;
 import org.jclouds.openstack.nova.v2_0.domain.Address;
@@ -445,7 +449,9 @@ public class VMmanagement implements Closeable {
 	public void close() throws IOException {
 		Closeables.close(context.novaApi, true);
 	}
-
+	public void support(){
+		ComputeService client = context.computeContext.getComputeService();
+	}
 	// public static void main(String[] args) {
 	// User user = new User("ducdmk55", "ducdmk55@123");
 	// System.out.println(user.getManager().caculateUpTime(

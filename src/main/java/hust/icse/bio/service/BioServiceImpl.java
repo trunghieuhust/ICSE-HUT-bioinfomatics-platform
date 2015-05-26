@@ -13,24 +13,15 @@ public class BioServiceImpl implements BioService {
 	}
 
 	@Override
-	public String submit(String username, String password, String workflow) {
-		String ID = "";
-		User user = UserManagement.getInstance().login(username, password);
-		if (user == null)
-			return "Invalid user name or password.";
-		else {
-			ID = HandlerRequest.getInstance().submit(user, workflow);
-			return ID;
-		}
+	public String createWorkflow(String username, String password,
+			String workflow) {
+		return HandlerRequest.getInstance().createWorkflow(username, password,
+				workflow);
 	}
 
 	@Override
 	public TaskResult getResult(String username, String password, String ID) {
-		if (login(username, password) == true) {
-			return HandlerRequest.getInstance().getTaskResult(ID);
-		} else {
-			return null;
-		}
+		return HandlerRequest.getInstance().getResult(username, password, ID);
 	}
 
 	@Override
@@ -39,18 +30,13 @@ public class BioServiceImpl implements BioService {
 	}
 
 	@Override
-	public String getAllID(String workflowID) {
-		return null;
+	public boolean authenticate(String username, String password) {
+		return HandlerRequest.getInstance().authenticate(username, password);
 	}
 
 	@Override
-	public boolean login(String username, String password) {
-		User user = UserManagement.getInstance().login(username, password);
-		if (user == null) {
-			return false;
-		} else {
-			return true;
-		}
+	public long uploadData(FileUploader uploadFile) {
+		return HandlerRequest.getInstance().uploadFile(uploadFile);
 	}
 
 }

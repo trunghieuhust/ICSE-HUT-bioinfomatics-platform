@@ -7,12 +7,12 @@ import javax.jws.WebService;
 @WebService(name = "bio", targetNamespace = "http://service.bio.icse.hust/")
 public interface BioService {
 	@WebMethod
-	public String submit(@WebParam(name = "username") String username,
+	public String createWorkflow(@WebParam(name = "username") String username,
 			@WebParam(name = "password") String password,
 			@WebParam(name = "workflow") String workflow);
 
 	@WebMethod
-	public boolean login(@WebParam(name = "username") String username,
+	public boolean authenticate(@WebParam(name = "username") String username,
 			@WebParam(name = "password") String password);
 
 	@WebMethod
@@ -24,5 +24,6 @@ public interface BioService {
 	public Status getStatus(@WebParam(name = "ID") String ID);
 
 	@WebMethod
-	public String getAllID(@WebParam(name = "workflowID") String workflowID);
+	public long uploadData(
+			@WebParam(name = "uploadFile") FileUploader uploadFile);
 }
