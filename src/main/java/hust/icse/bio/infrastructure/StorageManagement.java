@@ -1,6 +1,5 @@
-package hust.icse.bio.vm;
+package hust.icse.bio.infrastructure;
 
-import hust.icse.bio.service.User;
 import static org.jclouds.io.Payloads.newByteSourcePayload;
 
 import java.io.Closeable;
@@ -8,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 
@@ -155,15 +155,17 @@ public class StorageManagement implements Closeable {
 	 * List all containers belong to user
 	 */
 
-	public void listContainers() {
+	public String[] listContainers() {
 		System.out.println("List Containers");
 
 		ContainerApi containerApi = swiftApi.getContainerApi(this.defaultZone);
 		Set<Container> containers = containerApi.list().toSet();
-
+		ArrayList<String> containerList = new ArrayList<String>();
 		for (Container container : containers) {
 			System.out.println("  " + container);
+			containerList.add(container.getName());
 		}
+		return containerList.toArray(new String[containerList.size()]);
 	}
 
 	public void deleteAll() {
@@ -187,7 +189,7 @@ public class StorageManagement implements Closeable {
 	 * @param containerName
 	 * @return List all file in specified container
 	 */
-	public void listFile(String containerName) {
+	public String[] listFile(String containerName) {
 		ContainerApi containerApi = swiftApi.getContainerApi(this.defaultZone);
 		Set<Container> containers = containerApi.list().toSet();
 		for (Container container : containers) {
@@ -198,17 +200,19 @@ public class StorageManagement implements Closeable {
 						containerName);
 				Iterator<SwiftObject> objectIterators = objectApi.list()
 						.iterator();
+				ArrayList<String> fileList = new ArrayList<String>();
 				while (objectIterators.hasNext()) {
 					SwiftObject swiftObject = objectIterators.next();
 					System.out.println(swiftObject.getName() + ":"
 							+ swiftObject.getUri());
+					fileList.add(swiftObject.getName());
 				}
-				return;
+				return fileList.toArray(new String[fileList.size()]);
 			}
 		}
 
 		System.out.println("Container's name provided mismatch!");
-		return;
+		return null;
 
 	}
 

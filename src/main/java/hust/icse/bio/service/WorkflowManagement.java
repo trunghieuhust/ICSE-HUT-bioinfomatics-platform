@@ -1,5 +1,6 @@
 package hust.icse.bio.service;
 
+import hust.icse.bio.infrastructure.User;
 import hust.icse.bio.utils.UUIDultis;
 
 import java.util.ArrayList;

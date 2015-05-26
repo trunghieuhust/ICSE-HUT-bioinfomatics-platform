@@ -1,8 +1,8 @@
 package hust.icse.bio.workflow;
 
+import hust.icse.bio.infrastructure.User;
 import hust.icse.bio.service.ActivityStatus;
 import hust.icse.bio.service.State;
-import hust.icse.bio.service.User;
 
 import java.util.ArrayList;
 import java.util.List;

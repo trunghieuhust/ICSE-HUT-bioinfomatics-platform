@@ -1,4 +1,4 @@
-package hust.icse.bio.vm;
+package hust.icse.bio.infrastructure;
 
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.openstack.nova.v2_0.domain.Server;

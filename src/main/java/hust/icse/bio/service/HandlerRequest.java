@@ -1,5 +1,8 @@
 package hust.icse.bio.service;
 
+import hust.icse.bio.infrastructure.User;
+import hust.icse.bio.infrastructure.UserManagement;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -60,26 +63,72 @@ public class HandlerRequest {
 		return result;
 	}
 
-	public long uploadFile(FileUploader uploadFile) {
-		DataHandler dataHandler = uploadFile.getHandler();
-		try {
-			InputStream is = dataHandler.getInputStream();
-			OutputStream os = new FileOutputStream(new File("/tmp/"
-					+ uploadFile.getName()));
-			byte[] buffer = new byte[102400];
-			int byteRead = 0;
-			long receivedByte = 0;
-			while ((byteRead = is.read(buffer)) != -1) {
-				os.write(buffer, 0, byteRead);
-				receivedByte += byteRead;
+	public long uploadFile(String username, String password,
+			FileUploader uploadFile) {
+		if (authenticate(username, password) == true) {
+			DataHandler dataHandler = uploadFile.getHandler();
+			try {
+				InputStream is = dataHandler.getInputStream();
+				OutputStream os = new FileOutputStream(new File("/tmp/"
+						+ uploadFile.getName()));
+				byte[] buffer = new byte[102400];
+				int byteRead = 0;
+				long receivedByte = 0;
+				while ((byteRead = is.read(buffer)) != -1) {
+					os.write(buffer, 0, byteRead);
+					receivedByte += byteRead;
+				}
+				os.flush();
+				os.close();
+				is.close();
+				return receivedByte;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return -1;
+
 			}
-			os.flush();
-			os.close();
-			is.close();
-			return receivedByte;
-		} catch (Exception e) {
-			e.printStackTrace();
+		} else {
 			return -1;
+		}
+	}
+
+	public String[] getAllContainer(String username, String password) {
+		User user = getUser(username, password);
+		if (user != null) {
+			return user.getStorageManagement().listContainers();
+		} else {
+			return null;
+		}
+	}
+
+	public String[] getAllFileInContainer(String username, String password,
+			String containerName) {
+		User user = getUser(username, password);
+		if (user != null) {
+			return user.getStorageManagement().listFile(containerName);
+		} else {
+			return null;
+		}
+	}
+
+	public boolean deleteFile(String username, String password,
+			String containerName, String filename) {
+		User user = getUser(username, password);
+		if (user != null) {
+			return user.getStorageManagement().deleteFile(filename,
+					containerName);
+		} else {
+			return false;
+		}
+	}
+
+	public boolean deleteContainer(String username, String password,
+			String containerName) {
+		User user = getUser(username, password);
+		if (user != null) {
+			return user.getStorageManagement().deleteContainer(containerName);
+		} else {
+			return false;
 		}
 
 	}

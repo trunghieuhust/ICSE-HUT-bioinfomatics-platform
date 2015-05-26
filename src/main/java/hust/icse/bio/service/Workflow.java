@@ -3,6 +3,8 @@ package hust.icse.bio.service;
 import hust.icse.bio.dao.DAOFactory;
 import hust.icse.bio.dao.MySQLDAOFactory;
 import hust.icse.bio.dao.WorkflowDAO;
+import hust.icse.bio.infrastructure.User;
+import hust.icse.bio.infrastructure.UserManagement;
 import hust.icse.bio.utils.UUIDultis;
 import hust.icse.bio.workflow.Activity;
 import hust.icse.bio.workflow.Task;

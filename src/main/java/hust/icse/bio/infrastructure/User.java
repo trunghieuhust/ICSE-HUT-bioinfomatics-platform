@@ -1,11 +1,8 @@
-package hust.icse.bio.service;
-
-import hust.icse.bio.vm.CloudConfig;
-import hust.icse.bio.vm.StorageManagement;
-import hust.icse.bio.vm.VMmanagement;
+package hust.icse.bio.infrastructure;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+
 import com.google.common.io.Files;
 
 public class User {

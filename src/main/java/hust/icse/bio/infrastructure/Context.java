@@ -1,6 +1,4 @@
-package hust.icse.bio.vm;
-
-import hust.icse.bio.service.User;
+package hust.icse.bio.infrastructure;
 
 import java.util.Set;
 
@@ -10,6 +8,7 @@ import org.jclouds.domain.LoginCredentials;
 import org.jclouds.openstack.neutron.v2.NeutronApi;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
+
 import com.google.common.collect.ImmutableSet;
 import com.google.inject.Module;
 

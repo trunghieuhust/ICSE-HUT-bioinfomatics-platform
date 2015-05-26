@@ -35,8 +35,36 @@ public class BioServiceImpl implements BioService {
 	}
 
 	@Override
-	public long uploadData(FileUploader uploadFile) {
-		return HandlerRequest.getInstance().uploadFile(uploadFile);
+	public long uploadData(String username, String password,
+			FileUploader uploadFile) {
+		return HandlerRequest.getInstance().uploadFile(username, password,
+				uploadFile);
+	}
+
+	@Override
+	public String[] getAllContainer(String username, String password) {
+		return HandlerRequest.getInstance().getAllContainer(username, password);
+	}
+
+	@Override
+	public String[] getAllFileInContainer(String username, String password,
+			String containerName) {
+		return HandlerRequest.getInstance().getAllFileInContainer(username,
+				password, containerName);
+	}
+
+	@Override
+	public boolean deleteFile(String username, String password,
+			String containerName, String filename) {
+		return HandlerRequest.getInstance().deleteFile(username, password,
+				containerName, filename);
+	}
+
+	@Override
+	public boolean deleteContainer(String username, String password,
+			String containerName) {
+		return HandlerRequest.getInstance().deleteContainer(username, password,
+				containerName);
 	}
 
 }

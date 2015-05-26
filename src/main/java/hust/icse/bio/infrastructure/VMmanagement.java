@@ -1,6 +1,5 @@
-package hust.icse.bio.vm;
+package hust.icse.bio.infrastructure;
 
-import hust.icse.bio.service.User;
 import hust.icse.bio.utils.LockObject;
 
 import java.io.Closeable;

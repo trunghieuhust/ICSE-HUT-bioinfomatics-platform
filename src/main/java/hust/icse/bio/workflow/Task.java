@@ -1,12 +1,12 @@
 package hust.icse.bio.workflow;
 
 import hust.icse.bio.dao.DAOFactory;
+import hust.icse.bio.infrastructure.User;
+import hust.icse.bio.infrastructure.VM;
 import hust.icse.bio.service.State;
 import hust.icse.bio.service.TaskResult;
 import hust.icse.bio.service.TaskStatus;
-import hust.icse.bio.service.User;
 import hust.icse.bio.service.WorkflowManagement;
-import hust.icse.bio.vm.VM;
 
 import java.sql.Time;
 import java.util.Calendar;
