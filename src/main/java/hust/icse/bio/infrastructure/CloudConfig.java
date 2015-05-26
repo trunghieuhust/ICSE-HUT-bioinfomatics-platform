@@ -18,7 +18,7 @@ public interface CloudConfig {
 	public static final String UNDEFINED_SERVER = "Server not found";
 	public static final String UNDEFINED_INT_NET = "Internal network not found";
 	public static final String ubuntuImage = "ubuntu-14.04-server-cloudimg-amd64";
-	public static final String initScriptLink = "http://192.168.50.12:8080/v1/AUTH_e9718a4e5275474f8b157edf2167022b/script/cloudfuse-config.sh";
+	public static final String initScriptLink = "http://192.168.50.188:8080/v1/AUTH_e9718a4e5275474f8b157edf2167022b/config/cloudfuse-config.sh";
 	public static final String userSwiftEndPoint = "http://192.168.50.188:8080/v1/AUTH_1a1c2b5a4e3e4ff482fa557768aa0f94";
 	public static final String keypairContainer = "keypair";
 	public static final String instanceLogFolderLink = "http://192.168.50.12:8080/v1/AUTH_e9718a4e5275474f8b157edf2167022b/instance-log";
