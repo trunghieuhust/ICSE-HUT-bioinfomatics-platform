@@ -33,6 +33,7 @@ public class Task implements Runnable {
 	private Date created_at;
 	private Date finished_at;
 	private long duration;
+	private static final int MAX_RETRY = 50;
 
 	// TODO input output nhieu file.
 	public Task() {
@@ -143,13 +144,18 @@ public class Task implements Runnable {
 	@Override
 	public void run() {
 		created_at = Calendar.getInstance().getTime();
-		vm = user.getManager().launchInstance(taskID.toString(), image, flavor);
-		if (vm == null) {
-			status.updateStatus(State.QUEUEING);
-			try {
-				Thread.sleep(10000);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+		for (int i = 0; i < MAX_RETRY; i++) {
+			vm = user.getManager().launchInstance(taskID.toString(), image,
+					flavor);
+			if (vm == null) {
+				status.updateStatus(State.QUEUEING);
+				try {
+					Thread.sleep(10000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			} else {
+				break;
 			}
 		}
 		status.updateStatus(State.STILL_BEING_PROCESSED);
