@@ -5,6 +5,7 @@ import hust.icse.bio.infrastructure.UserManagement;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
@@ -63,39 +64,50 @@ public class HandlerRequest {
 		return result;
 	}
 
+	public boolean signUp(String username, String password) {
+		return UserManagement.getInstance().createUser(username, password);
+	}
+
 	public long uploadFile(String username, String password,
 			FileUploader uploadFile) {
-		if (authenticate(username, password) == true) {
-			DataHandler dataHandler = uploadFile.getHandler();
-			try {
-				InputStream is = dataHandler.getInputStream();
-				OutputStream os = new FileOutputStream(new File("/tmp/"
-						+ uploadFile.getName()));
-				byte[] buffer = new byte[102400];
-				int byteRead = 0;
-				long receivedByte = 0;
-				while ((byteRead = is.read(buffer)) != -1) {
-					os.write(buffer, 0, byteRead);
-					receivedByte += byteRead;
-				}
-				os.flush();
-				os.close();
-				is.close();
-				return receivedByte;
-			} catch (Exception e) {
-				e.printStackTrace();
-				return -1;
-
-			}
-		} else {
-			return -1;
-		}
+		User user = getUser(username, password);
+		DataHandler dataHandler = uploadFile.getHandler();
+		String etag = user.getStorageManagement().uploadFileFromInputStream(
+				dataHandler, user.getStorageManagement().getUploadContainer());
+		System.out.println("etag" + etag);
+		return 10;
+		// if (authenticate(username, password) == true) {
+		// DataHandler dataHandler = uploadFile.getHandler();
+		// try {
+		// InputStream is = dataHandler.getInputStream();
+		//
+		// OutputStream os = new FileOutputStream(new File("/tmp/"
+		// + uploadFile.getName()));
+		// byte[] buffer = new byte[102400];
+		// int byteRead = 0;
+		// long receivedByte = 0;
+		// while ((byteRead = is.read(buffer)) != -1) {
+		// os.write(buffer, 0, byteRead);
+		// receivedByte += byteRead;
+		// }
+		// os.flush();
+		// os.close();
+		// is.close();
+		// return receivedByte;
+		// } catch (Exception e) {
+		// e.printStackTrace();
+		// return -1;
+		//
+		// }
+		// } else {
+		// return -1;
+		// }
 	}
 
 	public String[] getAllContainer(String username, String password) {
 		User user = getUser(username, password);
 		if (user != null) {
-			return user.getStorageManagement().listContainers();
+			return user.getStorageManagement().listContainers(username);
 		} else {
 			return null;
 		}
@@ -130,6 +142,16 @@ public class HandlerRequest {
 		} else {
 			return false;
 		}
+	}
 
+	public String getLinkFile(String username, String password,
+			String containerName, String filename) {
+		User user = getUser(username, password);
+		if (user != null) {
+			return user.getStorageManagement().getFileLink(filename,
+					containerName);
+		} else {
+			return null;
+		}
 	}
 }

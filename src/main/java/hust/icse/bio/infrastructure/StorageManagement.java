@@ -11,9 +11,13 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Set;
 
+import javax.activation.DataHandler;
+
 import org.jclouds.ContextBuilder;
 import org.jclouds.io.ByteSources;
+import org.jclouds.io.MutableContentMetadata;
 import org.jclouds.io.Payload;
+import org.jclouds.io.Payloads;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.openstack.swift.v1.SwiftApi;
 import org.jclouds.openstack.swift.v1.domain.Container;
@@ -104,10 +108,27 @@ public class StorageManagement implements Closeable {
 				.getObjectApi(this.defaultZone, container);
 		ByteSource data = Files.asByteSource(new File(filePath));
 		Payload payload = newByteSourcePayload(data);
+
 		objectApi.put(filePath, payload,
 				PutOptions.Builder.metadata(ImmutableMap.of("key1", "value1")));
 
 		System.out.println("  " + filePath);
+	}
+
+	public String uploadFileFromInputStream(DataHandler datahandler,
+			String container) {
+		ObjectApi objectApi = swiftApi
+				.getObjectApi(this.defaultZone, container);
+		Payload payload = null;
+		try {
+			payload = Payloads.newInputStreamPayload(datahandler
+					.getInputStream());
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println(payload.toString());
+		return objectApi.put(datahandler.getName(), payload,
+				PutOptions.Builder.metadata(ImmutableMap.of("key1", "value1")));
 	}
 
 	public boolean deleteFile(String fileName, String container) {
@@ -155,13 +176,17 @@ public class StorageManagement implements Closeable {
 	 * List all containers belong to user
 	 */
 
-	public String[] listContainers() {
+	public String[] listContainers(String username) {
 		System.out.println("List Containers");
 
 		ContainerApi containerApi = swiftApi.getContainerApi(this.defaultZone);
 		Set<Container> containers = containerApi.list().toSet();
 		ArrayList<String> containerList = new ArrayList<String>();
 		for (Container container : containers) {
+			if (container.getName().contains("upload")
+					&& !container.getName().contains(username + "-upload")) {
+				continue;
+			}
 			System.out.println("  " + container);
 			containerList.add(container.getName());
 		}
@@ -203,8 +228,11 @@ public class StorageManagement implements Closeable {
 				ArrayList<String> fileList = new ArrayList<String>();
 				while (objectIterators.hasNext()) {
 					SwiftObject swiftObject = objectIterators.next();
-					System.out.println(swiftObject.getName() + ":"
-							+ swiftObject.getUri());
+					System.out.println(swiftObject.getName() + ":");
+					Set<String> set = swiftObject.getMetadata().keySet();
+					for (String string : set) {
+						System.out.println(string);
+					}
 					fileList.add(swiftObject.getName());
 				}
 				return fileList.toArray(new String[fileList.size()]);

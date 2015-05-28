@@ -16,6 +16,10 @@ public interface BioService {
 			@WebParam(name = "password") String password);
 
 	@WebMethod
+	public boolean signUp(@WebParam(name = "username") String username,
+			@WebParam(name = "password") String password);
+
+	@WebMethod
 	public TaskResult getResult(@WebParam(name = "username") String username,
 			@WebParam(name = "password") String password,
 			@WebParam(name = "ID") String ID);
@@ -50,4 +54,11 @@ public interface BioService {
 			@WebParam(name = "username") String username,
 			@WebParam(name = "password") String password,
 			@WebParam(name = "containerName") String containerName);
+
+	@WebMethod
+	public String getLinkFile(@WebParam(name = "username") String username,
+			@WebParam(name = "password") String password,
+			@WebParam(name = "containerName") String containerName,
+			@WebParam(name = "filename") String filename);
+
 }

@@ -67,4 +67,17 @@ public class BioServiceImpl implements BioService {
 				containerName);
 	}
 
+	@Override
+	public boolean signUp(String username, String password) {
+		return HandlerRequest.getInstance().signUp(username, password);
+	}
+
+	@Override
+	public String getLinkFile(String username, String password,
+			String containerName, String filename) {
+		return HandlerRequest.getInstance().getLinkFile(username, password,
+				containerName, filename);
+	}
+
+
 }

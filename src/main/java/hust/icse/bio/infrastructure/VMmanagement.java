@@ -61,7 +61,7 @@ public class VMmanagement implements Closeable {
 	public void listServers() {
 		for (String zone : context.zones) {
 			ServerApi serverApi = context.novaApi.getServerApiForZone(zone);
-			
+
 			System.out.println("Servers in " + zone);
 
 			for (Server server : serverApi.listInDetail().concat()) {
@@ -69,7 +69,6 @@ public class VMmanagement implements Closeable {
 			}
 		}
 	}
-
 
 	public VM launchInstance(String name, String image, String flavor) {
 		int timeoutCounting = 0;
@@ -90,17 +89,24 @@ public class VMmanagement implements Closeable {
 			System.err.println("attaching IP " + floatingIP);
 
 			while (!attachIP(floatingIP, serverID)) {
-				if (timeoutCounting < 200) {
+				if (timeoutCounting < 100) {
 					try {
-						// System.out.println(timeoutCounting);
+						if (checkServerStatus(serverID) == Status.ERROR) {
+							System.out.println("Build error.");
+							terminateInstancebyId(serverID);
+							return null;
+						}
 						Thread.sleep(500);
 						timeoutCounting++;
 					} catch (InterruptedException e) {
-						System.out.println("Error when attaching floating IP");
+						System.out
+								.println("Error when attaching floating IP.Terminated.");
+						terminateInstancebyId(serverID);
 						return null;
 					}
 				} else {
-					System.out.println("Booting error");
+					terminateInstancebyId(serverID);
+					System.out.println("Booting error.Terminated.");
 					return null;
 				}
 			}
@@ -121,7 +127,7 @@ public class VMmanagement implements Closeable {
 
 		System.out.println("Boot complete, ready to go!");
 		VM vm = new VM(this.context, name, serverID, floatingIP);
-		vm.runInitScript();
+		// vm.runInitScript();
 		return vm;
 	}
 
@@ -139,7 +145,7 @@ public class VMmanagement implements Closeable {
 		}
 
 	}
-	
+
 	public boolean checkLogInstance(String serverID) {
 		String log = this.getInstanceLog(serverID);
 		if (log == null)
@@ -448,7 +454,8 @@ public class VMmanagement implements Closeable {
 	public void close() throws IOException {
 		Closeables.close(context.novaApi, true);
 	}
-	public void support(){
+
+	public void support() {
 		ComputeService client = context.computeContext.getComputeService();
 	}
 	// public static void main(String[] args) {

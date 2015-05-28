@@ -13,6 +13,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.UUID;
 
+import org.jclouds.openstack.glance.v1_0.domain.Image.Status;
+
 public class Task implements Runnable {
 	private String toolAlias;
 	private String inputFile;
@@ -141,16 +143,21 @@ public class Task implements Runnable {
 	@Override
 	public void run() {
 		created_at = Calendar.getInstance().getTime();
-		status.updateStatus(State.STILL_BEING_PROCESSED);
 		vm = user.getManager().launchInstance(taskID.toString(), image, flavor);
-		System.out.println("VM ready. IP " + vm.getFloatingIP());
+		if (vm == null) {
+			status.updateStatus(State.QUEUEING);
+			try {
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		status.updateStatus(State.STILL_BEING_PROCESSED);
 		vm.executeCommand(getCommand());
 		result.setOutputConsole(user.getStorageManagement().getFileLink(
 				name + "_output_console.txt", workflowID.toString()));
 		result.setOutputFile(user.getStorageManagement().getFileLink(
 				outputFile, workflowID.toString()));
-		System.err.println(result.getOutputConsole());
-		System.err.println(result.getOutputFile());
 		user.getManager().terminateInstance(vm);
 		status.updateStatus(State.COMPLETE_SUCCESSFULLY);
 		WorkflowManagement.getInstance().addTaskResult(result, taskID);

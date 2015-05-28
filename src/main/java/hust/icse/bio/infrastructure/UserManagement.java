@@ -1,5 +1,6 @@
 package hust.icse.bio.infrastructure;
 
+import java.util.Calendar;
 import java.util.NoSuchElementException;
 
 import org.jclouds.ContextBuilder;
@@ -146,13 +147,13 @@ public class UserManagement {
 	}
 
 	public static void main(String[] args) {
-		// User user = UserManagement.getInstance().login("ducdmk55",
-		// "ducdmk55@123");
-		// if (user != null) {
-		// System.out.println(user.getKeypair());
-		// user.getManager().generateKeypair("abc");
-		// }
-
+		User user = UserManagement.getInstance().authenticate("ducdmk55",
+				"ducdmk55@123");
+		long startTime = System.currentTimeMillis();
+		user.getManager().launchInstance("test01", CloudConfig.ubuntuImage,
+				"m1.large");
+		long endTime = System.currentTimeMillis();
+		System.err.println((endTime - startTime)/1000);
 		// UserManagement manager = new UserManagement();
 		// if (manager.createUser("anhnnk55", "anhnnk55@123")) {
 		// System.out.println("sucess");
@@ -161,11 +162,6 @@ public class UserManagement {
 
 		// UserManagement manager = new UserManagement();
 		// System.out.println(manager.isUserExist("dacdmk55"));
-		if (UserManagement.getInstance().deleteUser(
-				new User("dattsk55", "anhnnk55@123"))) {
-			System.out.println("success");
-		} else
-			System.out.println("fail");
-		;
+
 	}
 }
