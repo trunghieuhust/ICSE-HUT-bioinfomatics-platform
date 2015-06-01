@@ -10,12 +10,15 @@ import hust.icse.bio.workflow.Activity;
 import hust.icse.bio.workflow.Task;
 import hust.icse.bio.workflow.Tool;
 import hust.icse.bio.workflow.WorkFlowUtils;
+import hust.icse.bio.workflow.WorkflowInfo;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.UUID;
+
+import com.sun.jna.platform.win32.WinDef.WPARAM;
 
 public class Workflow implements Runnable {
 	private String rawWorkflow;
@@ -28,7 +31,8 @@ public class Workflow implements Runnable {
 	private String name;
 	private Date createdTime;
 	private Date finishedTime;
-	private final static String TEST = "<workflow name='2step'><activities><activity name='aligment'><task name='clustal1'><tool-alias>clustal</tool-alias><input-files input='actin'></input-files><output-files output='output1'></output-files></task><task name='clustal2'><tool-alias>clustalo2</tool-alias><input-files input='actin'></input-files><output-files output='output2'></output-files></task></activity><activity name='fasttree'><task name='fasttree'><tool-alias>fasttree</tool-alias><input-files input='output2'></input-files><output-files output='output-fasttree'></output-files></task></activity></activities></workflow><tools><tool><alias>clustal</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool><alias>clustalo2</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
+	private WorkflowInfo workflowInfo;
+	private final static String TEST = "<workflow name='2step' save-as-template='true'><activities><activity name='aligment'><task name='clustal1'><tool-alias>clustal</tool-alias><input-files input='actin'></input-files><output-files output='output1'></output-files><flavor>small</flavor></task><task name='clustal2'><tool-alias>clustalo2</tool-alias><input-files input='actin'></input-files><output-files output='output2'></output-files></task></activity><activity name='fasttree'><task name='fasttree'><tool-alias>fasttree</tool-alias><input-files input='output1'></input-files><output-files output='output-fasttree'></output-files><flavor>small</flavor></task></activity></activities></workflow><tools><tool><alias>clustal</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool><alias>clustalo2</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
 	private WorkflowDAO workflowDAO;
 
 	public Workflow(User user, String workflow, UUID workflowID) {
@@ -36,23 +40,22 @@ public class Workflow implements Runnable {
 		this.rawWorkflow = workflow;
 		this.workflowID = workflowID;
 		this.user = user;
-		this.name = WorkFlowUtils.getInstance().getWorkflowName(workflow);
 		this.status = new Status(name, workflowID.toString(),
 				State.getDescription(State.QUEUEING), State.QUEUEING);
-		activityList = WorkFlowUtils.getInstance().parse(workflow);
-		activityManager = new HashMap<UUID, Activity>();
-		taskManager = new HashMap<UUID, Task>();
+		workflowInfo = WorkFlowUtils.getInstance().parse(workflow);
+		this.name = workflowInfo.getName();
 		workflowDAO = DAOFactory.getDAOFactory(DAOFactory.MYSQL)
 				.getWorkflowDAO();
+		activityList = workflowInfo.getActivityList();
+		activityManager = new HashMap<UUID, Activity>();
+		taskManager = new HashMap<UUID, Task>();
 
 		assignID();
 		assignTool();
-		System.err.println(status.toString());
 	}
 
 	private void assignTool() {
-		ArrayList<Tool> tools = WorkFlowUtils.getInstance().parseTools(
-				rawWorkflow);
+		ArrayList<Tool> tools = workflowInfo.getToolList();
 		for (Activity activity : activityList) {
 			ArrayList<Task> tasks = activity.getTaskList();
 			for (Task task : tasks) {
@@ -89,6 +92,9 @@ public class Workflow implements Runnable {
 
 	@Override
 	public void run() {
+		if (workflowInfo.isSaveAsTemplate()) {
+			workflowDAO.insertTemplate(this);
+		}
 		createdTime = Calendar.getInstance().getTime();
 		status.setStatusCode(State.STILL_BEING_PROCESSED);
 		user.getStorageManagement().createContainer(workflowID.toString());
@@ -154,10 +160,11 @@ public class Workflow implements Runnable {
 	// }
 
 	public static void main(String[] args) {
-		User user = UserManagement.getInstance().authenticate("ducdmk55",
-				"ducdmk55@123");
+		// User user = UserManagement.getInstance().authenticate("ducdmk55",
+		// "ducdmk55@123");
+		User user = null;
 		Workflow wf = new Workflow(user, TEST, UUIDultis.nextUUID());
 		Thread thread = new Thread(wf);
-		 thread.start();
+		// thread.start();
 	}
 }

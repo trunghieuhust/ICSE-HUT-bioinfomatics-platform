@@ -11,6 +11,11 @@ public interface BioService {
 			@WebParam(name = "password") String password,
 			@WebParam(name = "workflow") String workflow);
 
+	public String createWorkflowFromTemplate(
+			@WebParam(name = "username") String username,
+			@WebParam(name = "password") String password,
+			@WebParam(name = "workflow") String workflowName);
+
 	@WebMethod
 	public boolean authenticate(@WebParam(name = "username") String username,
 			@WebParam(name = "password") String password);

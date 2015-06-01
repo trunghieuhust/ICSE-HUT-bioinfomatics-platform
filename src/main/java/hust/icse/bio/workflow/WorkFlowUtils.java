@@ -26,6 +26,8 @@ public class WorkFlowUtils {
 	private final static String PACKAGE = "package";
 	private final static String COMMAND = "command";
 	private final static String EXECUTE = "execute";
+	private final static String SAVE_AS_TEMPLATE = "save-as-template";
+	private final static String AUTO_DELETE_AFTER = "auto-delete-after";
 
 	public WorkFlowUtils() {
 
@@ -35,39 +37,54 @@ public class WorkFlowUtils {
 		return instance;
 	}
 
-	public String getWorkflowName(String workflow) {
-		Document doc = Jsoup.parse(workflow);
-		Elements wfElement = doc.select(WORKFLOW);
-		return wfElement.attr(NAME);
-	}
-
-	public ArrayList<Activity> parse(String workflow) {
+	public WorkflowInfo parse(String workflow) {
 		ArrayList<Activity> activityList = new ArrayList<Activity>();
+		ArrayList<Tool> toolList = new ArrayList<Tool>();
+		WorkflowInfo info = new WorkflowInfo();
 		if (isValid(workflow)) {
 			Document doc = Jsoup.parse(workflow);
 			Elements workflowElements = doc.select(WORKFLOW);
+			Elements toolsNode = doc.select(TOOLS).select(TOOL);
 			Elements activities = workflowElements.select(ACTIVITIES);
 			Elements activityElements = activities.select(ACTIVITY);
-			// ArrayList<Tool> tools = parseTools(toolsNode);
+			toolList = parseTools(toolsNode);
 			activityList = parseActivities(activityElements);
+			info.setActivityList(activityList);
+			info.setToolList(toolList);
+			if (workflowElements.hasAttr(NAME)) {
+				info.setName(workflowElements.attr(NAME));
+			}
+			if (workflowElements.hasAttr(SAVE_AS_TEMPLATE)) {
+				String saveAs = workflowElements.attr(SAVE_AS_TEMPLATE);
+				System.out.println("saveAs: " + saveAs);
+				if (saveAs.equals("true")) {
+					info.setSaveAsTemplate(true);
+				} else {
+					info.setSaveAsTemplate(false);
+				}
+			}
+			if (workflowElements.hasAttr(AUTO_DELETE_AFTER)) {
+				String periodString = workflowElements.attr(AUTO_DELETE_AFTER);
+				System.out.println("period: " + periodString);
+				long period = convertToDateTime(periodString);
+				if (period > 0) {
+					info.setDeleteAfter(period);
+				}
+			}
 		}
-		return activityList;
+		return info;
 	}
 
-	public ArrayList<Tool> parseTools(String workflow) {
-		Document doc = Jsoup.parse(workflow);
-
-		Elements toolsNode = doc.select(TOOLS).select(TOOL);
-
+	private ArrayList<Tool> parseTools(Elements toolsElement) {
 		ArrayList<Tool> tools = new ArrayList<Tool>();
-		System.out.println(toolsNode.size());
-		for (int i = 0; i < toolsNode.size(); i++) {
+		// System.out.println(toolsElement.size());
+		for (int i = 0; i < toolsElement.size(); i++) {
 			Tool tool = new Tool();
-			tool.setAlias(toolsNode.get(i).select(ALIAS).text());
-			tool.setCommand(toolsNode.get(i).select(EXECUTE).attr(COMMAND));
-			tool.setName(toolsNode.get(i).select(NAME).text());
-			tool.setPackageName(toolsNode.get(i).select(PACKAGE).text());
-			tool.setVersion(toolsNode.get(i).select(VERSION).text());
+			tool.setAlias(toolsElement.get(i).select(ALIAS).text());
+			tool.setCommand(toolsElement.get(i).select(EXECUTE).attr(COMMAND));
+			tool.setName(toolsElement.get(i).select(NAME).text());
+			tool.setPackageName(toolsElement.get(i).select(PACKAGE).text());
+			tool.setVersion(toolsElement.get(i).select(VERSION).text());
 			tools.add(tool);
 		}
 		return tools;
@@ -80,7 +97,6 @@ public class WorkFlowUtils {
 					ACTIVITY_NAME));
 			activity.insertMultipleTask(parseTask(activityElements.get(i)
 					.select(TASK)));
-			// activity.print();
 			activities.add(activity);
 		}
 		return activities;
@@ -97,9 +113,7 @@ public class WorkFlowUtils {
 			task.setOutputFile(taskElement.get(i).select(OUTPUT_FILES)
 					.attr(OUTPUT));
 			task.setName(taskElement.get(i).attr(NAME));
-			// System.err.println(task.toString());
 			tasks.add(task);
-			// System.out.println(task.toString());
 		}
 		return tasks;
 	}
@@ -108,9 +122,46 @@ public class WorkFlowUtils {
 		return true;
 	}
 
-	// public static void main(String[] args) {
-	// WorkFlowUtils wf = new WorkFlowUtils();
-	// wf.parse(TEST);
-	// }
+	/**
+	 * 
+	 * @param dateTime
+	 *            . Example 1d-12h-20m-10s
+	 */
+	private long convertToDateTime(String dateTime) {
+		String[] splitted = dateTime.split("-");
+		long second = 0;
+		try {
+			for (int i = 0; i < splitted.length; i++) {
+				if (splitted[i].contains("d")) {
+					String dayStr = splitted[i].replace("d", "");
+					int day = Integer.parseInt(dayStr);
+					second += day * 24 * 60 * 60;
+				}
+				if (splitted[i].contains("h")) {
+					String hourStr = splitted[i].replace("h", "");
+					int hour = Integer.parseInt(hourStr);
+					second += hour * 60 * 60;
+				}
+				if (splitted[i].contains("m")) {
+					String minStr = splitted[i].replace("m", "");
+					int min = Integer.parseInt(minStr);
+					second += min * 60;
+				}
+				if (splitted[i].contains("s")) {
+					String secStr = splitted[i].replace("s", "");
+					int sec = Integer.parseInt(secStr);
+					second += sec;
+				}
+			}
+		} catch (NumberFormatException e) {
+			e.printStackTrace();
+			second = -1;
+		}
+		return second;
+	}
 
+	// public static void main(String[] args) {
+	// System.out.println(WorkFlowUtils.getInstance().convertToDateTime(
+	// "1h1m-10s"));
+	// }
 }

@@ -44,8 +44,8 @@ public class StorageManagement implements Closeable {
 	private static StorageManagement instance;
 
 	public static void main(String[] args) throws IOException {
-		String CONTAINER_NAME = "keypair";
-		String OBJECT_NAME = "ducdmk55.pem";
+		// String CONTAINER_NAME = "keypair";
+		// String OBJECT_NAME = "ducdmk55.pem";
 		StorageManagement jcloudsSwift = new StorageManagement(new User(
 				"ducdmk55", "ducdmk55@123"));
 		jcloudsSwift.deleteAll();
@@ -93,7 +93,7 @@ public class StorageManagement implements Closeable {
 		if (containerApi.create(container, options)) {
 			System.out.println("Created " + container);
 		} else {
-			System.out.println("Fail to create container");
+			System.out.println("Fail to create container: " + container);
 		}
 	}
 
@@ -140,7 +140,8 @@ public class StorageManagement implements Closeable {
 			objectApi.delete(fileName);
 			return true;
 		} else {
-			System.out.println("Fail to delete!");
+			System.out.println("Fail to delete file: " + fileName + " in: "
+					+ container);
 			return false;
 		}
 	}
@@ -267,7 +268,8 @@ public class StorageManagement implements Closeable {
 						return swiftObject.getUri().toString();
 					}
 				}
-				System.out.println("File not found in this container");
+				System.out.println("File: " + fileName
+						+ " not found container: " + containerName);
 				return null;
 			}
 		}

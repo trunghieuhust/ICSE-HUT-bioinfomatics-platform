@@ -154,4 +154,9 @@ public class HandlerRequest {
 			return null;
 		}
 	}
+
+	public String createWorkflowFromTemplate(String username, String password,
+			String workflowName) {
+		return null;
+	}
 }

@@ -127,7 +127,7 @@ public class VMmanagement implements Closeable {
 
 		System.out.println("Boot complete, ready to go!");
 		VM vm = new VM(this.context, name, serverID, floatingIP);
-		// vm.runInitScript();
+		 vm.runInitScript();
 		return vm;
 	}
 
