@@ -95,7 +95,8 @@ public class UserManagement {
 			VMmanagement vmManager = createdUser.getManager();
 			if (vmManager.generateKeypair(username)) {
 				StorageManagement.getAdminInstance().uploadFileFromPath(
-						username + ".pem", CloudConfig.keypairContainer);
+						"/tmp/" + username + ".pem",
+						CloudConfig.keypairContainer);
 				createdUser.setKeypair();
 				// Create user-upload container
 				createdUser.getStorageManagement().createContainer(
@@ -153,7 +154,7 @@ public class UserManagement {
 		user.getManager().launchInstance("test01", CloudConfig.ubuntuImage,
 				"m1.large");
 		long endTime = System.currentTimeMillis();
-		System.err.println((endTime - startTime)/1000);
+		System.err.println((endTime - startTime) / 1000);
 		// UserManagement manager = new UserManagement();
 		// if (manager.createUser("anhnnk55", "anhnnk55@123")) {
 		// System.out.println("sucess");

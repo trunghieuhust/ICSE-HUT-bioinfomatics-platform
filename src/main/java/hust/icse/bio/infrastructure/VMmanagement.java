@@ -136,7 +136,7 @@ public class VMmanagement implements Closeable {
 				context.defaultZone).get();
 		KeyPair keypair = keypairApi.create(keypairName);
 		try {
-			FileUtils.writeStringToFile(new File(keypairName + ".pem"),
+			FileUtils.writeStringToFile(new File("/tmp/" + keypairName + ".pem"),
 					keypair.getPrivateKey());
 			return true;
 		} catch (IOException e) {
