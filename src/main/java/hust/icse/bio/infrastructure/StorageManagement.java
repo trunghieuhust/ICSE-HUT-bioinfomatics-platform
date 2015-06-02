@@ -5,20 +5,24 @@ import static org.jclouds.io.Payloads.newByteSourcePayload;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
 import javax.activation.DataHandler;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.jclouds.ContextBuilder;
-import org.jclouds.io.ByteSources;
-import org.jclouds.io.MutableContentMetadata;
 import org.jclouds.io.Payload;
 import org.jclouds.io.Payloads;
-import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.openstack.swift.v1.SwiftApi;
 import org.jclouds.openstack.swift.v1.domain.Container;
 import org.jclouds.openstack.swift.v1.domain.SwiftObject;
@@ -26,13 +30,13 @@ import org.jclouds.openstack.swift.v1.features.ContainerApi;
 import org.jclouds.openstack.swift.v1.features.ObjectApi;
 import org.jclouds.openstack.swift.v1.options.CreateContainerOptions;
 import org.jclouds.openstack.swift.v1.options.PutOptions;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteSource;
 import com.google.common.io.Closeables;
 import com.google.common.io.Files;
-import com.google.inject.Module;
 
 public class StorageManagement implements Closeable {
 	private final Set<String> zones;
@@ -48,7 +52,13 @@ public class StorageManagement implements Closeable {
 		// String OBJECT_NAME = "ducdmk55.pem";
 		StorageManagement jcloudsSwift = new StorageManagement(new User(
 				"ducdmk55", "ducdmk55@123"));
-		jcloudsSwift.deleteAll();
+		System.out.println("Size:"
+				+ jcloudsSwift.getFileSize("input", "ducdmk55-upload"));
+		ArrayList<HashMap<String, String>> list = jcloudsSwift
+				.containerDetails("4d25bb10-6d7e-4eb2-87a7-ef32998df34e");
+		for (HashMap<String, String> hashMap : list) {
+			System.out.println(hashMap.get("name") + ":" + hashMap.get("size"));
+		}
 		jcloudsSwift.close();
 	}
 
@@ -276,6 +286,118 @@ public class StorageManagement implements Closeable {
 
 		System.out.println("Container's name provided mismatch!1");
 		return null;
+
+	}
+
+	private String getToken() {
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		try {
+			String httpRequestLink = "http://192.168.50.12:35357/v2.0/tokens";
+			HttpPost request = new HttpPost(httpRequestLink);
+			String json_data = "{\"auth\": {\"tenantName\": \""
+					+ CloudConfig.bioServiceTenantName
+					+ "\",\"passwordCredentials\": {\"username\": \""
+					+ this.user.getUsername() + "\",\"password\": \""
+					+ this.user.getPassword() + "\"}}}";
+			StringEntity params = new StringEntity(json_data);
+			request.addHeader("content-type", "application/json");
+			request.setEntity(params);
+			HttpResponse response = httpClient.execute(request);
+			// proceed only if status code = 200
+			if (response.getStatusLine().getStatusCode() == 200) {
+				JSONObject rootObject = new JSONObject(
+						EntityUtils.toString(response.getEntity()));
+				JSONObject tokenObject = rootObject.getJSONObject("access")
+						.getJSONObject("token");
+				return tokenObject.getString("id");
+
+			} else
+				return null;
+		} catch (Exception ex) {
+			// handle exception here
+			return null;
+		}
+	}
+
+	public long getFileSize(String fileName, String containerName) {
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		try {
+			String httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
+					+ CloudConfig.bioServiceTenantID + "/" + containerName
+					+ "?format=json";
+			String token = this.getToken();
+			System.out.println(token);
+			if (token == null) {
+				System.out.println("Null token, Authorize Failed!");
+				return -1;
+			} else {
+				HttpGet fileSizeRequest = new HttpGet(httpRequestLink);
+				fileSizeRequest.addHeader("X-Auth-Token", token);
+				HttpResponse response = httpClient.execute(fileSizeRequest);
+				// proceed only if status code = 200
+
+				if (response.getStatusLine().getStatusCode() == 200) {
+					JSONArray array = new JSONArray(
+							EntityUtils.toString(response.getEntity()));
+					for (int i = 0; i < array.length(); i++) {
+						JSONObject object = array.getJSONObject(i);
+						if (object.getString("name").equals(fileName)) {
+							return object.getLong("bytes");
+						}
+					}
+				} else {
+					return -1;
+				}
+				return -1;
+			}
+
+		} catch (Exception ex) {
+			return -1;
+		}
+	}
+
+	// TODO
+
+	public ArrayList<HashMap<String, String>> containerDetails(
+			String containerName) {
+		ArrayList<HashMap<String, String>> resultList = null;
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		try {
+			String httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
+					+ CloudConfig.bioServiceTenantID + "/" + containerName
+					+ "?format=json";
+			String token = this.getToken();
+			System.out.println(token);
+			if (token == null) {
+				System.out.println("Null token, Authorize Failed!");
+				return resultList;
+			} else {
+				HttpGet fileSizeRequest = new HttpGet(httpRequestLink);
+				fileSizeRequest.addHeader("X-Auth-Token", token);
+				HttpResponse response = httpClient.execute(fileSizeRequest);
+				// proceed only if status code = 200
+
+				if (response.getStatusLine().getStatusCode() == 200) {
+					JSONArray array = new JSONArray(
+							EntityUtils.toString(response.getEntity()));
+					resultList = new ArrayList<HashMap<String, String>>();
+					System.out.println(array.length());
+					for (int i = 0; i < array.length(); i++) {
+						JSONObject object;
+						object = array.getJSONObject(i);
+						HashMap<String, String> objectInfo = new HashMap<String, String>();
+						System.out.println(object.getString("name"));
+						objectInfo.put("name", object.getString("name"));
+						objectInfo.put("size", object.getLong("bytes") + "");
+						resultList.add(objectInfo);
+					}
+				}
+				return resultList;
+			}
+
+		} catch (Exception ex) {
+			return null;
+		}
 
 	}
 
