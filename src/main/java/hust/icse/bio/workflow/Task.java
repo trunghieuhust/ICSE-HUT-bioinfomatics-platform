@@ -17,8 +17,10 @@ import org.jclouds.openstack.glance.v1_0.domain.Image.Status;
 
 public class Task implements Runnable {
 	private String toolAlias;
-	private String inputFile;
-	private String outputFile;
+	private String[] input;
+	private String[] inputValue;
+	private String[] output;
+	private String[] outputValue;
 	private TaskResult result;
 	private String name;
 	private TaskStatus status;
@@ -45,8 +47,8 @@ public class Task implements Runnable {
 		return toolAlias;
 	}
 
-	public String getInputFile() {
-		return inputFile;
+	public String[] getInput() {
+		return input;
 	}
 
 	public Date getCreated_at() {
@@ -65,8 +67,8 @@ public class Task implements Runnable {
 		return taskID.toString();
 	}
 
-	public String outputFile() {
-		return outputFile;
+	public String[] getOutput() {
+		return output;
 	}
 
 	public TaskStatus getStatus() {
@@ -85,12 +87,28 @@ public class Task implements Runnable {
 		this.user = user;
 	}
 
-	public void setInputFile(String inputFile) {
-		this.inputFile = inputFile;
+	public void setInput(String[] input) {
+		this.input = input;
 	}
 
-	public void setOutputFile(String outputFile) {
-		this.outputFile = outputFile;
+	public void setOutput(String[] output) {
+		this.output = output;
+	}
+
+	public void setOutputValue(String[] outputValue) {
+		this.outputValue = outputValue;
+	}
+
+	public void setInputValue(String[] inputValue) {
+		this.inputValue = inputValue;
+	}
+
+	public String[] getInputValue() {
+		return inputValue;
+	}
+
+	public String[] getOutputValue() {
+		return outputValue;
 	}
 
 	public void setWorkflowID(UUID workflowID) {
@@ -135,8 +153,18 @@ public class Task implements Runnable {
 
 	@Override
 	public String toString() {
-		return "Task:" + "\n\t Name: " + name + "\n\t Alias: " + toolAlias
-				+ "\n\t Input: " + inputFile + "\n\tOutput: " + outputFile;
+		StringBuilder sb = new StringBuilder();
+		sb.append("Task:" + "\n\t Name: " + name + "\n\t Alias: " + toolAlias
+				+ "\n\t Input: ");
+		for (int i = 0; i < input.length; i++) {
+			sb.append("\n\t\t" + input[i] + ": " + inputValue[i]);
+		}
+		sb.append("\n\tOutput: ");
+		for (int i = 0; i < output.length; i++) {
+			sb.append("\n\t\t" + output[i] + ": " + outputValue[i]);
+		}
+
+		return sb.toString();
 		// return "\n\tTask : " + toolAlias + "\n\tTaskID: " +
 		// taskID.toString();
 	}
@@ -162,8 +190,8 @@ public class Task implements Runnable {
 		vm.executeCommand(getCommand());
 		result.setOutputConsole(user.getStorageManagement().getFileLink(
 				name + "_output_console.txt", workflowID.toString()));
-		result.setOutputFile(user.getStorageManagement().getFileLink(
-				outputFile, workflowID.toString()));
+		result.setOutputFile(user.getStorageManagement().getFileLink(output[1],
+				workflowID.toString()));
 		user.getManager().terminateInstance(vm);
 		status.updateStatus(State.COMPLETE_SUCCESSFULLY);
 		WorkflowManagement.getInstance().addTaskResult(result, taskID);
@@ -178,13 +206,20 @@ public class Task implements Runnable {
 	public String getCommand() {
 		String folder = getSwiftFolder();
 		String command = tool.getName() + " " + tool.getCommand();
-		command = command.replace("$output", folder + outputFile);
-		if (user.getStorageManagement().getFileLink(inputFile,
-				user.getStorageManagement().getUploadContainer()) == null) {
-			command = command.replace("$input", folder + inputFile);
-		} else {
-			command = command.replace("$input", user.getStorageManagement()
-					.getUploadFolder() + "/" + inputFile);
+		for (int i = 0; i < input.length; i++) {
+			if (user.getStorageManagement().getFileLink(inputValue[i],
+					user.getStorageManagement().getUploadContainer()) == null) {
+				// input file from previous activity
+				command = command.replace("$" + input[i], folder
+						+ inputValue[i]);
+			} else {
+				// input file from upload folder
+				command = command.replace("$input", user.getStorageManagement()
+						.getUploadFolder() + "/" + inputValue[i]);
+			}
+		}
+		for (int i = 0; i < output.length; i++) {
+			command = command.replace("$" + output[i], folder + outputValue[i]);
 		}
 		command = command + " &> " + folder + name + "_output_console.txt";
 		System.out.println(command);
@@ -198,4 +233,21 @@ public class Task implements Runnable {
 		return folder;
 	}
 
+	public static void main(String[] args) {
+		Task task = new Task();
+		String[] input = { "in1", "in2" };
+		String[] inputValue = { "input1", "input2" };
+		String[] output = { "o1", "o2" };
+		String[] outputValue = { "output1", "output2" };
+		Tool tool = new Tool("alias", "name", "1.0", "package",
+				"-i={$in1,$in2} -o={$o1,$o2}");
+		task.setUser(new User("ducdmk55", "ducdmk55@123"));
+		task.setTool(tool);
+		task.setInput(input);
+		task.setOutput(output);
+		task.setOutputValue(outputValue);
+		task.setInputValue(inputValue);
+		task.setWorkflowID(UUID.randomUUID());
+		task.getCommand();
+	}
 }

@@ -1,5 +1,7 @@
 package hust.icse.bio.service;
 
+import hust.icse.bio.dao.DAOFactory;
+import hust.icse.bio.dao.WorkflowDAO;
 import hust.icse.bio.infrastructure.User;
 import hust.icse.bio.utils.UUIDultis;
 
@@ -32,6 +34,17 @@ public class WorkflowManagement {
 		Thread thread = new Thread(newWorkflow);
 		thread.start();
 		return workflowID.toString();
+	}
+
+	public String createWorkflowFromTemplate(User user, String workflowName) {
+		WorkflowDAO workflowDAO = DAOFactory.getDAOFactory(DAOFactory.MYSQL)
+				.getWorkflowDAO();
+		String rawXML = workflowDAO.getTemplate(workflowName, user.getUserID());
+		if (rawXML != null) {
+			return createWorkflow(user, rawXML);
+		} else {
+			return null;
+		}
 	}
 
 	public TaskResult getTaskResult(String ID) {

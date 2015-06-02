@@ -81,10 +81,9 @@ public class BioServiceImpl implements BioService {
 
 	@Override
 	public String createWorkflowFromTemplate(String username, String password,
-			String workflowName) {
-		// TODO Auto-generated method stub
-		return null;
+			String workflowName, String[] inputValue) {
+		return HandlerRequest.getInstance().createWorkflowFromTemplate(
+				username, password, workflowName, inputValue);
 	}
-
 
 }

@@ -156,7 +156,20 @@ public class HandlerRequest {
 	}
 
 	public String createWorkflowFromTemplate(String username, String password,
-			String workflowName) {
-		return null;
+			String workflowName, String[] inputValue) {
+		User user = getUser(username, password);
+		if (user != null) {
+			return WorkflowManagement.getInstance().createWorkflowFromTemplate(
+					user, workflowName);
+		} else {
+			return null;
+		}
+	}
+
+	public static void main(String[] args) {
+		String[] a = getInstance().getAllContainer("ducdmk55", "ducdmk55@123");
+		for (int i = 0; i < a.length; i++) {
+			System.out.println(a);
+		}
 	}
 }

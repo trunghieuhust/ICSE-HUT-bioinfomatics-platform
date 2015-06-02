@@ -1,10 +1,14 @@
 package hust.icse.bio.workflow;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Attribute;
+import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
+import org.w3c.dom.Element;
 
 public class WorkFlowUtils {
 	private static WorkFlowUtils instance = new WorkFlowUtils();
@@ -28,6 +32,7 @@ public class WorkFlowUtils {
 	private final static String EXECUTE = "execute";
 	private final static String SAVE_AS_TEMPLATE = "save-as-template";
 	private final static String AUTO_DELETE_AFTER = "auto-delete-after";
+	private final static String TEST = "<workflow name='2step' save-as-template='true'><activities><activity name='aligment'><task name='clustal1'><tool-alias>clustal</tool-alias><input-files in1='actin' in2='actin2' in3='actin3'></input-files><output-files out1='output1' out2='output2'></output-files><flavor>small</flavor></task><task name='clustal2'><tool-alias>clustalo2</tool-alias><input-files input='actin'></input-files><output-files output='output2'></output-files></task></activity><activity name='fasttree'><task name='fasttree'><tool-alias>fasttree</tool-alias><input-files input='output1'></input-files><output-files output='output-fasttree'></output-files><flavor>small</flavor></task></activity></activities></workflow><tools><tool><alias>clustal</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool><alias>clustalo2</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
 
 	public WorkFlowUtils() {
 
@@ -75,6 +80,40 @@ public class WorkFlowUtils {
 		return info;
 	}
 
+	public String convertToTemplate(String rawXML) {
+		Document doc = Jsoup.parse(rawXML);
+		Elements workflowElements = doc.select(WORKFLOW);
+		if (workflowElements.hasAttr(SAVE_AS_TEMPLATE)) {
+			workflowElements.removeAttr(SAVE_AS_TEMPLATE);
+		}
+		return doc.toString();
+	}
+
+	public String mapInputToTemplate(String rawXML, String[] value) {
+		Document doc = Jsoup.parse(rawXML);
+		Elements inputElements = doc.select(WORKFLOW).select(ACTIVITIES)
+				.select(INPUT_FILES);
+		if (value == null || value.length == 0) {
+			return null;
+		} else {
+			int currentIndex = 0;
+			for (int i = 0; i < inputElements.size(); i++) {
+				List<Attribute> attList = inputElements.get(i).attributes()
+						.asList();
+				for (Attribute attribute : attList) {
+					if (currentIndex < value.length) {
+						attribute.setValue(value[currentIndex]);
+						currentIndex++;
+					} else {
+						break;
+					}
+				}
+			}
+		}
+
+		return doc.toString();
+	}
+
 	private ArrayList<Tool> parseTools(Elements toolsElement) {
 		ArrayList<Tool> tools = new ArrayList<Tool>();
 		// System.out.println(toolsElement.size());
@@ -108,10 +147,33 @@ public class WorkFlowUtils {
 		for (int i = 0; i < taskElement.size(); i++) {
 			Task task = new Task();
 			task.setAlias(taskElement.get(i).select(TOOL_ALIAS).text());
-			task.setInputFile(taskElement.get(i).select(INPUT_FILES)
-					.attr(INPUT));
-			task.setOutputFile(taskElement.get(i).select(OUTPUT_FILES)
-					.attr(OUTPUT));
+			Elements inputElement = taskElement.get(i).select(INPUT_FILES);
+			for (int j = 0; j < inputElement.size(); j++) {
+				Attributes attributes = inputElement.get(j).attributes();
+				ArrayList<String> input = new ArrayList<String>();
+				ArrayList<String> inputValue = new ArrayList<String>();
+				for (Attribute attribute : attributes) {
+					input.add(attribute.getKey());
+					inputValue.add(attribute.getValue());
+				}
+				task.setInput(input.toArray(new String[input.size()]));
+				task.setInputValue(inputValue.toArray(new String[inputValue
+						.size()]));
+			}
+			Elements outputElement = taskElement.get(i).select(OUTPUT_FILES);
+			for (int j = 0; j < outputElement.size(); j++) {
+				Attributes attributes = outputElement.get(j).attributes();
+				ArrayList<String> output = new ArrayList<String>();
+				ArrayList<String> outputValue = new ArrayList<String>();
+				for (Attribute attribute : attributes) {
+					output.add(attribute.getKey());
+					outputValue.add(attribute.getValue());
+				}
+				task.setOutput(output.toArray(new String[output.size()]));
+				task.setOutputValue(outputValue.toArray(new String[outputValue
+						.size()]));
+			}
+
 			task.setName(taskElement.get(i).attr(NAME));
 			tasks.add(task);
 		}
@@ -160,8 +222,17 @@ public class WorkFlowUtils {
 		return second;
 	}
 
-	// public static void main(String[] args) {
-	// System.out.println(WorkFlowUtils.getInstance().convertToDateTime(
-	// "1h1m-10s"));
-	// }
+	public static void main(String[] args) {
+		String test = "<workflow name='2step' save-as-template='true'><activities><activity name='aligment'><task name='clustal1'><tool-alias>clustal</tool-alias><input-files in1='actin' in2='123'></input-files><output-files output='output1'></output-files><flavor>small</flavor></task><task name='clustal2'><tool-alias>clustalo2</tool-alias><input-files input='actin'></input-files><output-files output='output2'></output-files></task></activity><activity name='fasttree'><task name='fasttree'><tool-alias>fasttree</tool-alias><input-files input='output1'></input-files><output-files output='output-fasttree'></output-files><flavor>small</flavor></task></activity></activities></workflow><tools><tool><alias>clustal</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool><alias>clustalo2</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
+		// String map = WorkFlowUtils.getInstance().mapInputToTemplate(test,
+		// new String[] { "new", "new1", "new2", "output2" });
+		WorkflowInfo wf = getInstance().parse(TEST);
+		ArrayList<Activity> list = wf.getActivityList();
+		for (Activity activity : list) {
+			ArrayList<Task> taskList = activity.getTaskList();
+			for (Task task : taskList) {
+				System.out.println(task.toString());
+			}
+		}
+	}
 }

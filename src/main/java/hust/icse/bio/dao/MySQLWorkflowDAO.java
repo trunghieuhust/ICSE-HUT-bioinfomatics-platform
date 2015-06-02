@@ -9,8 +9,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Collection;
 
-import org.apache.logging.log4j.core.util.UuidUtil;
-
 public class MySQLWorkflowDAO implements WorkflowDAO {
 	public MySQLWorkflowDAO() {
 	}

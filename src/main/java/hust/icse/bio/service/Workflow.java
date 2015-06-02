@@ -93,18 +93,13 @@ public class Workflow implements Runnable {
 	@Override
 	public void run() {
 		if (workflowInfo.isSaveAsTemplate()) {
+			this.rawWorkflow = WorkFlowUtils.getInstance().convertToTemplate(
+					this.rawWorkflow);
 			workflowDAO.insertTemplate(this);
 		}
 		createdTime = Calendar.getInstance().getTime();
 		status.setStatusCode(State.STILL_BEING_PROCESSED);
 		user.getStorageManagement().createContainer(workflowID.toString());
-		for (Task task : activityList.get(0).getTaskList()) {
-			user.getStorageManagement().copyFileToOtherContainer(
-					task.getInputFile(),
-					user.getStorageManagement().getUploadContainer(),
-					workflowID.toString());
-
-		}
 		for (Activity activity : activityList) {
 			System.out.println("Activity " + activity.getName()
 					+ "\nActivityID: "
