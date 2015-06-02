@@ -18,9 +18,6 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.jclouds.compute.ComputeService;
-import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.Template;
-import org.jclouds.compute.predicates.OperatingSystemPredicates;
 import org.jclouds.openstack.neutron.v2.domain.Network;
 import org.jclouds.openstack.neutron.v2.features.NetworkApi;
 import org.jclouds.openstack.nova.v2_0.domain.Address;
@@ -58,7 +55,7 @@ public class VMmanagement implements Closeable {
 		return server.getStatus();
 	}
 
-	public void listServers() {
+	private void listServers() {
 		for (String zone : context.zones) {
 			ServerApi serverApi = context.novaApi.getServerApiForZone(zone);
 
@@ -127,7 +124,7 @@ public class VMmanagement implements Closeable {
 
 		System.out.println("Boot complete, ready to go!");
 		VM vm = new VM(this.context, name, serverID, floatingIP);
-		 vm.runInitScript();
+		vm.runInitScript();
 		return vm;
 	}
 
@@ -136,7 +133,8 @@ public class VMmanagement implements Closeable {
 				context.defaultZone).get();
 		KeyPair keypair = keypairApi.create(keypairName);
 		try {
-			FileUtils.writeStringToFile(new File("/tmp/" + keypairName + ".pem"),
+			FileUtils.writeStringToFile(
+					new File("/tmp/" + keypairName + ".pem"),
 					keypair.getPrivateKey());
 			return true;
 		} catch (IOException e) {
@@ -146,7 +144,7 @@ public class VMmanagement implements Closeable {
 
 	}
 
-	public boolean checkLogInstance(String serverID) {
+	private boolean checkLogInstance(String serverID) {
 		String log = this.getInstanceLog(serverID);
 		if (log == null)
 			return false;
@@ -234,7 +232,7 @@ public class VMmanagement implements Closeable {
 		return terminateInstancebyId(vm.getID());
 	}
 
-	public String getFlavorId(String flavor) {
+	private String getFlavorId(String flavor) {
 		FlavorApi flavorApi = context.novaApi
 				.getFlavorApiForZone(context.defaultZone);
 		try {
@@ -249,7 +247,7 @@ public class VMmanagement implements Closeable {
 		throw new NullPointerException("Flavor not found");
 	}
 
-	public String getImageId(String image) {
+	private String getImageId(String image) {
 		ImageApi imageApi = context.novaApi
 				.getImageApiForZone(context.defaultZone);
 		try {
@@ -264,7 +262,7 @@ public class VMmanagement implements Closeable {
 		throw new NullPointerException("Image not found");
 	}
 
-	public String getNetworkId(String network) {
+	private String getNetworkId(String network) {
 		NetworkApi networkApi = context.neutronApi
 				.getNetworkApi(context.defaultZone);
 		try {
@@ -279,7 +277,7 @@ public class VMmanagement implements Closeable {
 		throw new NullPointerException("Network not found");
 	}
 
-	public boolean attachIP(String ip, String server) {
+	private boolean attachIP(String ip, String server) {
 		FloatingIPApi floatingIPApi = context.novaApi
 				.getFloatingIPExtensionForZone(context.defaultZone).get();
 		if (!InetAddressValidator.getInstance().isValid(ip))
@@ -327,7 +325,7 @@ public class VMmanagement implements Closeable {
 	// }
 	// }
 
-	public String getOrCreateFloatingIP() {
+	private String getOrCreateFloatingIP() {
 		String availableIP = getAvailableFloatingIP();
 
 		if (availableIP != null) {
@@ -376,7 +374,7 @@ public class VMmanagement implements Closeable {
 		}
 	}
 
-	public String getAvailableFloatingIP() {
+	private String getAvailableFloatingIP() {
 		HttpClient httpClient = HttpClientBuilder.create().build();
 		try {
 			String request = "http://192.168.50.12:8774/v2/"
