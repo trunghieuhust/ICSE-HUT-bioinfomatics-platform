@@ -114,7 +114,6 @@ public class UserManagement {
 
 	}
 
-	// TODO Delete user in openstack
 	public boolean deleteUser(User user) {
 		if (!isUserExist(user.getUsername()))
 			return false;
@@ -151,18 +150,15 @@ public class UserManagement {
 		User user = UserManagement.getInstance().authenticate("ducdmk55",
 				"ducdmk55@123");
 		long startTime = System.currentTimeMillis();
-		user.getManager().launchInstance("test01", CloudConfig.ubuntuImage,
-				"m1.large");
+		VM vm = user.getManager().launchInstance("test01",
+				CloudConfig.ubuntuImage, "m1.small");
 		long endTime = System.currentTimeMillis();
-		System.err.println((endTime - startTime) / 1000);
-		// UserManagement manager = new UserManagement();
-		// if (manager.createUser("anhnnk55", "anhnnk55@123")) {
-		// System.out.println("sucess");
-		// } else
-		// System.out.println("fail");
-
-		// UserManagement manager = new UserManagement();
-		// System.out.println(manager.isUserExist("dacdmk55"));
-
+		System.err.println("VM Creation time:" + (endTime - startTime) / 1000);
+		startTime = System.currentTimeMillis();
+		String snapshotID = vm.createSnapshot("testSnapshot");
+		endTime = System.currentTimeMillis();
+		System.err.println("Snapshots " + snapshotID + " Creation time:"
+				+ (endTime - startTime) / 1000);
+		user.getManager().terminateInstance(vm);
 	}
 }

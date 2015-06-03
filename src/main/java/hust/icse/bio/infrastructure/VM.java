@@ -1,6 +1,11 @@
 package hust.icse.bio.infrastructure;
 
 import org.jclouds.compute.domain.ExecResponse;
+import org.jclouds.openstack.glance.v1_0.domain.Image;
+import org.jclouds.openstack.glance.v1_0.domain.Image.Status;
+import org.jclouds.openstack.glance.v1_0.domain.ImageDetails;
+import org.jclouds.openstack.glance.v1_0.features.ImageApi;
+import org.jclouds.openstack.glance.v1_0.options.UpdateImageOptions;
 import org.jclouds.openstack.nova.v2_0.domain.Server;
 import org.jclouds.openstack.nova.v2_0.features.ServerApi;
 import org.jclouds.ssh.SshClient;
@@ -53,18 +58,40 @@ public class VM {
 	public String createSnapshot(String imageName) {
 		ServerApi serverApi = context.novaApi
 				.getServerApiForZone(context.defaultZone);
-		return serverApi.createImageFromServer(imageName, this.ID);
+		String snapshotID = null;
+		int timeout = 0;
+		// TODO
+		ImageApi imageApi = context.glanceApi
+				.getImageApiForZone(context.defaultZone);
+		snapshotID = serverApi.createImageFromServer(imageName, this.ID);
+		if (snapshotID != null) {
+			System.out.println("Waiting for Snapshot saving process......");
+			while (imageApi.get(snapshotID).getStatus() != Status.ACTIVE) {
+				if (timeout < 1000) {
+					try {
+						Thread.sleep(1000);
+						timeout++;
+					} catch (InterruptedException e) {
+						System.out.println("Error Occured");
+						return null;
+					}
+				} else {
+					System.out.println("Creation timeout");
+				}
+			}
+			System.out.println("Snapshot creation complete after " + timeout
+					+ " retry!");
+			imageApi.update(snapshotID, new UpdateImageOptions().isPublic(true));
+		}
+		return snapshotID;
 	}
 
 	public long getUpTime() {
 		ServerApi serverApi = context.novaApi
 				.getServerApiForZone(context.defaultZone);
 		Server server = serverApi.get(this.ID);
-		// System.out.println(server.getCreated().getTime());
-		// System.out.println(System.currentTimeMillis());
 		long duration = (System.currentTimeMillis() - server.getCreated()
 				.getTime());
-		// System.out.println("duration:" + duration / 1000 + " seconds");
 		return duration;
 	}
 

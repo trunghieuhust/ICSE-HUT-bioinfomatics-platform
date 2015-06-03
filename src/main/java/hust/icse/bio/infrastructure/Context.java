@@ -5,6 +5,8 @@ import java.util.Set;
 import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.domain.LoginCredentials;
+import org.jclouds.openstack.glance.v1_0.GlanceApi;
+import org.jclouds.openstack.glance.v1_0.features.ImageApi;
 import org.jclouds.openstack.neutron.v2.NeutronApi;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
@@ -16,10 +18,12 @@ public class Context {
 	public final NovaApi novaApi;
 	public final NeutronApi neutronApi;
 	public final ComputeServiceContext computeContext;
+	public final GlanceApi glanceApi;
 	public final Set<String> zones;
 	public final LoginCredentials loginCredentials;
 	public final String userPassword;
 	public final String username;
+
 	String defaultZone = null;
 
 	public Context(User user) {
@@ -39,6 +43,10 @@ public class Context {
 				.endpoint(CloudConfig.endpoint)
 				.credentials(user.getUserIdentity(), user.getPassword())
 				.buildApi(NeutronApi.class);
+		glanceApi = ContextBuilder.newBuilder(CloudConfig.glanceProvider)
+				.endpoint(CloudConfig.endpoint)
+				.credentials(user.getUserIdentity(), user.getPassword())
+				.buildApi(GlanceApi.class);
 		zones = novaApi.getConfiguredZones();
 		if (null == defaultZone) {
 			defaultZone = zones.iterator().next();
