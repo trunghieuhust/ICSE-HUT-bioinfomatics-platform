@@ -1,7 +1,7 @@
 package hust.icse.bio.dao;
 
-import hust.icse.bio.service.Workflow;
 import hust.icse.bio.utils.UUIDultis;
+import hust.icse.bio.workflow.Workflow;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;

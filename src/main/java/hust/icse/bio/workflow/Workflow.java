@@ -1,16 +1,14 @@
-package hust.icse.bio.service;
+package hust.icse.bio.workflow;
 
 import hust.icse.bio.dao.DAOFactory;
 import hust.icse.bio.dao.MySQLDAOFactory;
 import hust.icse.bio.dao.WorkflowDAO;
 import hust.icse.bio.infrastructure.User;
 import hust.icse.bio.infrastructure.UserManagement;
+import hust.icse.bio.service.State;
+import hust.icse.bio.service.Status;
+import hust.icse.bio.tools.Tool;
 import hust.icse.bio.utils.UUIDultis;
-import hust.icse.bio.workflow.Activity;
-import hust.icse.bio.workflow.Task;
-import hust.icse.bio.workflow.Tool;
-import hust.icse.bio.workflow.WorkFlowUtils;
-import hust.icse.bio.workflow.WorkflowInfo;
 
 import java.util.ArrayList;
 import java.util.Calendar;

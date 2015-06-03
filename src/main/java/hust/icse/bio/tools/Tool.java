@@ -1,4 +1,4 @@
-package hust.icse.bio.workflow;
+package hust.icse.bio.tools;
 
 public class Tool {
 	private String alias;

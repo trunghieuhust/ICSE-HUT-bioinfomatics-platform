@@ -1,5 +1,7 @@
 package hust.icse.bio.workflow;
 
+import hust.icse.bio.tools.Tool;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,7 +10,6 @@ import org.jsoup.nodes.Attribute;
 import org.jsoup.nodes.Attributes;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
-import org.w3c.dom.Element;
 
 public class WorkFlowUtils {
 	private static WorkFlowUtils instance = new WorkFlowUtils();
@@ -20,8 +21,6 @@ public class WorkFlowUtils {
 	private final static String TOOL_ALIAS = "tool-alias";
 	private final static String OUTPUT_FILES = "output-files";
 	private final static String INPUT_FILES = "input-files";
-	private final static String OUTPUT = "output";
-	private final static String INPUT = "input";
 	private final static String TOOLS = "tools";
 	private final static String TOOL = "tool";
 	private final static String ALIAS = "alias";

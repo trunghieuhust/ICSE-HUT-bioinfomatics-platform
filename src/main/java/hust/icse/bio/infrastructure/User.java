@@ -34,7 +34,6 @@ public class User {
 		} catch (IOException e) {
 			System.out.println("Keypair not found");
 		}
-
 	}
 
 	public String getUsername() {

@@ -9,6 +9,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.activation.DataHandler;
@@ -46,6 +47,8 @@ public class StorageManagement implements Closeable {
 	private User user;
 	private SwiftApi swiftApi;
 	private static StorageManagement instance;
+	public static final String NAME = "name";
+	public static final String BYTES = "bytes";
 
 	public static void main(String[] args) throws IOException {
 		// String CONTAINER_NAME = "keypair";
@@ -54,11 +57,6 @@ public class StorageManagement implements Closeable {
 				"ducdmk55", "ducdmk55@123"));
 		System.out.println("Size:"
 				+ jcloudsSwift.getFileSize("input", "ducdmk55-upload"));
-		ArrayList<HashMap<String, String>> list = jcloudsSwift
-				.containerDetails("4d25bb10-6d7e-4eb2-87a7-ef32998df34e");
-		for (HashMap<String, String> hashMap : list) {
-			System.out.println(hashMap.get("name") + ":" + hashMap.get("size"));
-		}
 		jcloudsSwift.close();
 	}
 
@@ -187,21 +185,23 @@ public class StorageManagement implements Closeable {
 	 * List all containers belong to user
 	 */
 
-	public String[] listContainers(String username) {
-		System.out.println("List Containers");
-
+	public List<hust.icse.bio.service.Container> listContainers(String username) {
 		ContainerApi containerApi = swiftApi.getContainerApi(this.defaultZone);
 		Set<Container> containers = containerApi.list().toSet();
-		ArrayList<String> containerList = new ArrayList<String>();
+		ArrayList<hust.icse.bio.service.Container> containerList = new ArrayList<hust.icse.bio.service.Container>();
 		for (Container container : containers) {
 			if (container.getName().contains("upload")
 					&& !container.getName().contains(username + "-upload")) {
 				continue;
 			}
-			System.out.println("  " + container);
-			containerList.add(container.getName());
+			hust.icse.bio.service.Container cont = new hust.icse.bio.service.Container();
+			cont.setByteUsed(container.getBytesUsed());
+			cont.setName(container.getName());
+			cont.setObjectCount(container.getObjectCount());
+			cont.setFileList(containerDetails(cont.getName()));
+			containerList.add(cont);
 		}
-		return containerList.toArray(new String[containerList.size()]);
+		return containerList;
 	}
 
 	public void deleteAll() {
@@ -230,8 +230,6 @@ public class StorageManagement implements Closeable {
 		Set<Container> containers = containerApi.list().toSet();
 		for (Container container : containers) {
 			if (container.getName().equals(containerName)) {
-				System.out.println("List Files:");
-
 				ObjectApi objectApi = swiftApi.getObjectApi(this.defaultZone,
 						containerName);
 				Iterator<SwiftObject> objectIterators = objectApi.list()
@@ -239,11 +237,7 @@ public class StorageManagement implements Closeable {
 				ArrayList<String> fileList = new ArrayList<String>();
 				while (objectIterators.hasNext()) {
 					SwiftObject swiftObject = objectIterators.next();
-					System.out.println(swiftObject.getName() + ":");
 					Set<String> set = swiftObject.getMetadata().keySet();
-					for (String string : set) {
-						System.out.println(string);
-					}
 					fileList.add(swiftObject.getName());
 				}
 				return fileList.toArray(new String[fileList.size()]);
@@ -269,22 +263,25 @@ public class StorageManagement implements Closeable {
 				// System.out.println("List Files:");
 				ObjectApi objectApi = swiftApi.getObjectApi(this.defaultZone,
 						containerName);
-				Iterator<SwiftObject> objectIterators = objectApi.list()
-						.iterator();
-				while (objectIterators.hasNext()) {
-					SwiftObject swiftObject = objectIterators.next();
-					if (swiftObject.getName().contains(fileName)) {
-						// System.out.println("File found");
-						return swiftObject.getUri().toString();
+				if (objectApi.list() != null) {
+					Iterator<SwiftObject> objectIterators = objectApi.list()
+							.iterator();
+					while (objectIterators.hasNext()) {
+						SwiftObject swiftObject = objectIterators.next();
+						if (swiftObject.getName().contains(fileName)) {
+							// System.out.println("File found");
+							return swiftObject.getUri().toString();
+						}
 					}
+					System.out.println("File: " + fileName
+							+ " not found container: " + containerName);
+					return null;
 				}
-				System.out.println("File: " + fileName
-						+ " not found container: " + containerName);
-				return null;
 			}
 		}
 
-		System.out.println("Container's name provided mismatch!1");
+		System.out.println("Container's name :" + containerName
+				+ "provided mismatch. File: " + fileName);
 		return null;
 
 	}
@@ -356,18 +353,15 @@ public class StorageManagement implements Closeable {
 		}
 	}
 
-	// TODO
-
-	public ArrayList<HashMap<String, String>> containerDetails(
+	public ArrayList<hust.icse.bio.service.File> containerDetails(
 			String containerName) {
-		ArrayList<HashMap<String, String>> resultList = null;
+		ArrayList<hust.icse.bio.service.File> resultList = null;
 		HttpClient httpClient = HttpClientBuilder.create().build();
 		try {
 			String httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
 					+ CloudConfig.bioServiceTenantID + "/" + containerName
 					+ "?format=json";
 			String token = this.getToken();
-			System.out.println(token);
 			if (token == null) {
 				System.out.println("Null token, Authorize Failed!");
 				return resultList;
@@ -380,16 +374,16 @@ public class StorageManagement implements Closeable {
 				if (response.getStatusLine().getStatusCode() == 200) {
 					JSONArray array = new JSONArray(
 							EntityUtils.toString(response.getEntity()));
-					resultList = new ArrayList<HashMap<String, String>>();
-					System.out.println(array.length());
+					resultList = new ArrayList<hust.icse.bio.service.File>();
 					for (int i = 0; i < array.length(); i++) {
 						JSONObject object;
 						object = array.getJSONObject(i);
-						HashMap<String, String> objectInfo = new HashMap<String, String>();
-						System.out.println(object.getString("name"));
-						objectInfo.put("name", object.getString("name"));
-						objectInfo.put("size", object.getLong("bytes") + "");
-						resultList.add(objectInfo);
+						hust.icse.bio.service.File file = new hust.icse.bio.service.File();
+						file.setName(object.getString("name"));
+						file.setBytes(object.getLong("bytes"));
+						file.setFileURL(getFileLink(file.getName(),
+								containerName));
+						resultList.add(file);
 					}
 				}
 				return resultList;

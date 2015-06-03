@@ -1,5 +1,7 @@
 package hust.icse.bio.service;
 
+import java.util.List;
+
 import javax.jws.WebMethod;
 import javax.jws.WebParam;
 import javax.jws.WebService;
@@ -39,12 +41,12 @@ public interface BioService {
 			@WebParam(name = "uploadFile") FileUploader uploadFile);
 
 	@WebMethod
-	public String[] getAllContainer(
+	public List<Container> getAllContainer(
 			@WebParam(name = "username") String username,
 			@WebParam(name = "password") String password);
 
 	@WebMethod
-	public String[] getAllFileInContainer(
+	public List<File> getAllFileInContainer(
 			@WebParam(name = "username") String username,
 			@WebParam(name = "password") String password,
 			@WebParam(name = "containerName") String containerName);
@@ -66,5 +68,6 @@ public interface BioService {
 			@WebParam(name = "password") String password,
 			@WebParam(name = "containerName") String containerName,
 			@WebParam(name = "filename") String filename);
-
+	
+	
 }

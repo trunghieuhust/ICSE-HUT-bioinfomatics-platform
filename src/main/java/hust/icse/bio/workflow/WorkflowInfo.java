@@ -1,5 +1,7 @@
 package hust.icse.bio.workflow;
 
+import hust.icse.bio.tools.Tool;
+
 import java.util.ArrayList;
 
 public class WorkflowInfo {

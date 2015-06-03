@@ -6,7 +6,7 @@ import javax.xml.bind.annotation.XmlType;
 @XmlType
 public class TaskResult {
 	private String outputConsole;
-	private String outputFile;
+	private String[] outputFile;
 	private long durationTime;
 
 	public TaskResult() {
@@ -19,7 +19,7 @@ public class TaskResult {
 	}
 
 	@XmlElement
-	public String getOutputFile() {
+	public String[] getOutputFile() {
 		return outputFile;
 	}
 
@@ -36,7 +36,7 @@ public class TaskResult {
 		return true;
 	}
 
-	public void setOutputFile(String outputFile) {
+	public void setOutputFile(String[] outputFile) {
 		this.outputFile = outputFile;
 	}
 }

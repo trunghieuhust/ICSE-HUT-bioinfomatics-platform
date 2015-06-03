@@ -4,7 +4,6 @@ import hust.icse.bio.utils.UUIDultis;
 import hust.icse.bio.workflow.Task;
 
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
@@ -25,7 +24,7 @@ public class MySQLTaskDAO implements TaskDAO {
 					UUIDultis.UUIDtoByteArray(task.getWorkflowID()));
 			preparedStatement.setString(4, task.getName());
 			preparedStatement.setInt(5, task.getStatus().getStatusCode());
-			preparedStatement.setString(6, task.getInputFile());
+			preparedStatement.setString(6, task.getInput());
 			preparedStatement.setString(7, task.getToolAlias());
 			preparedStatement.setTimestamp(8, new java.sql.Timestamp(task.getCreated_at()
 					.getTime()));

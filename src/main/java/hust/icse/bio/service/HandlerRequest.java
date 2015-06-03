@@ -2,12 +2,10 @@ package hust.icse.bio.service;
 
 import hust.icse.bio.infrastructure.User;
 import hust.icse.bio.infrastructure.UserManagement;
+import hust.icse.bio.workflow.WorkflowManagement;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.activation.DataHandler;
 
@@ -76,35 +74,9 @@ public class HandlerRequest {
 				dataHandler, user.getStorageManagement().getUploadContainer());
 		System.out.println("etag" + etag);
 		return 10;
-		// if (authenticate(username, password) == true) {
-		// DataHandler dataHandler = uploadFile.getHandler();
-		// try {
-		// InputStream is = dataHandler.getInputStream();
-		//
-		// OutputStream os = new FileOutputStream(new File("/tmp/"
-		// + uploadFile.getName()));
-		// byte[] buffer = new byte[102400];
-		// int byteRead = 0;
-		// long receivedByte = 0;
-		// while ((byteRead = is.read(buffer)) != -1) {
-		// os.write(buffer, 0, byteRead);
-		// receivedByte += byteRead;
-		// }
-		// os.flush();
-		// os.close();
-		// is.close();
-		// return receivedByte;
-		// } catch (Exception e) {
-		// e.printStackTrace();
-		// return -1;
-		//
-		// }
-		// } else {
-		// return -1;
-		// }
 	}
 
-	public String[] getAllContainer(String username, String password) {
+	public List<Container> getAllContainer(String username, String password) {
 		User user = getUser(username, password);
 		if (user != null) {
 			return user.getStorageManagement().listContainers(username);
@@ -113,11 +85,14 @@ public class HandlerRequest {
 		}
 	}
 
-	public String[] getAllFileInContainer(String username, String password,
-			String containerName) {
+	public List<hust.icse.bio.service.File> getAllFileInContainer(
+			String username, String password, String containerName) {
 		User user = getUser(username, password);
 		if (user != null) {
-			return user.getStorageManagement().listFile(containerName);
+			ArrayList<hust.icse.bio.service.File> fileList = user
+					.getStorageManagement().containerDetails(containerName);
+
+			return fileList;
 		} else {
 			return null;
 		}
@@ -167,9 +142,17 @@ public class HandlerRequest {
 	}
 
 	public static void main(String[] args) {
-		String[] a = getInstance().getAllContainer("ducdmk55", "ducdmk55@123");
-		for (int i = 0; i < a.length; i++) {
-			System.out.println(a);
+		List<Container> a = getInstance().getAllContainer("ducdmk55",
+				"ducdmk55@123");
+		for (Container container : a) {
+			System.out.println(container.getName() + " "
+					+ container.getObjectCount() + " "
+					+ container.getByteUsed());
+			List<hust.icse.bio.service.File> fileList = container.getFileList();
+			for (hust.icse.bio.service.File file : fileList) {
+				System.out.println("\t" + file.getName() + " "
+						+ file.getBytes());
+			}
 		}
 	}
 }

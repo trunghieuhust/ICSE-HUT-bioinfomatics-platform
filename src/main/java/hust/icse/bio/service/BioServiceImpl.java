@@ -1,5 +1,6 @@
 package hust.icse.bio.service;
 
+import java.util.List;
 import java.util.logging.Level;
 
 import javax.jws.WebService;
@@ -42,12 +43,12 @@ public class BioServiceImpl implements BioService {
 	}
 
 	@Override
-	public String[] getAllContainer(String username, String password) {
+	public List<Container> getAllContainer(String username, String password) {
 		return HandlerRequest.getInstance().getAllContainer(username, password);
 	}
 
 	@Override
-	public String[] getAllFileInContainer(String username, String password,
+	public List<File> getAllFileInContainer(String username, String password,
 			String containerName) {
 		return HandlerRequest.getInstance().getAllFileInContainer(username,
 				password, containerName);

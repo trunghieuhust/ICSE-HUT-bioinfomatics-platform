@@ -6,11 +6,13 @@ import hust.icse.bio.infrastructure.VM;
 import hust.icse.bio.service.State;
 import hust.icse.bio.service.TaskResult;
 import hust.icse.bio.service.TaskStatus;
-import hust.icse.bio.service.WorkflowManagement;
+import hust.icse.bio.tools.Tool;
 
 import java.sql.Time;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.UUID;
 
 import org.jclouds.openstack.glance.v1_0.domain.Image.Status;
@@ -47,8 +49,15 @@ public class Task implements Runnable {
 		return toolAlias;
 	}
 
-	public String[] getInput() {
-		return input;
+	public String getInput() {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < input.length; i++) {
+			sb.append(input[i]);
+			if (i != input.length) {
+				sb.append(",");
+			}
+		}
+		return sb.toString();
 	}
 
 	public Date getCreated_at() {
@@ -190,8 +199,12 @@ public class Task implements Runnable {
 		vm.executeCommand(getCommand());
 		result.setOutputConsole(user.getStorageManagement().getFileLink(
 				name + "_output_console.txt", workflowID.toString()));
-		result.setOutputFile(user.getStorageManagement().getFileLink(output[1],
-				workflowID.toString()));
+		List<String> outputLink = new ArrayList<String>();
+		for (int i = 0; i < output.length; i++) {
+			outputLink.add(user.getStorageManagement().getFileLink(output[i],
+					workflowID.toString()));
+		}
+		result.setOutputFile(outputLink.toArray(new String[outputLink.size()]));
 		user.getManager().terminateInstance(vm);
 		status.updateStatus(State.COMPLETE_SUCCESSFULLY);
 		WorkflowManagement.getInstance().addTaskResult(result, taskID);

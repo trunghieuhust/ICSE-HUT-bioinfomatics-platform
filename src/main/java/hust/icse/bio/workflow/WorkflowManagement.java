@@ -1,8 +1,11 @@
-package hust.icse.bio.service;
+package hust.icse.bio.workflow;
 
 import hust.icse.bio.dao.DAOFactory;
 import hust.icse.bio.dao.WorkflowDAO;
 import hust.icse.bio.infrastructure.User;
+import hust.icse.bio.service.State;
+import hust.icse.bio.service.Status;
+import hust.icse.bio.service.TaskResult;
 import hust.icse.bio.utils.UUIDultis;
 
 import java.util.ArrayList;

@@ -2,7 +2,7 @@ package hust.icse.bio.dao;
 
 import java.util.Collection;
 
-import hust.icse.bio.service.Workflow;
+import hust.icse.bio.workflow.Workflow;
 
 public interface WorkflowDAO {
 	int insertWorkflow(Workflow workflow);
