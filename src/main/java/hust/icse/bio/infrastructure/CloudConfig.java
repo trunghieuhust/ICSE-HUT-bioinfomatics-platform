@@ -11,6 +11,7 @@ public interface CloudConfig {
 	public static final String swiftProvider = "openstack-swift";
 	public static final String novaProvider = "openstack-nova";
 	public static final String keystoneProvider = "openstack-keystone";
+	public static final String glanceProvider = "openstack-glance";
 	public static final String internalNetwork = "int_net";
 	public static final String neutronProvider = "openstack-neutron";
 	public static final String UNDEFINED_FLAVOR = "Flavor not found";
