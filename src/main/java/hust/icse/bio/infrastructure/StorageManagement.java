@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +14,7 @@ import java.util.Set;
 import javax.activation.DataHandler;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
@@ -33,6 +33,7 @@ import org.jclouds.openstack.swift.v1.options.CreateContainerOptions;
 import org.jclouds.openstack.swift.v1.options.PutOptions;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.springframework.aop.framework.adapter.ThrowsAdviceInterceptor;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.io.ByteSource;
@@ -51,12 +52,23 @@ public class StorageManagement implements Closeable {
 	public static final String BYTES = "bytes";
 
 	public static void main(String[] args) throws IOException {
-		// String CONTAINER_NAME = "keypair";
-		// String OBJECT_NAME = "ducdmk55.pem";
 		StorageManagement jcloudsSwift = new StorageManagement(new User(
 				"ducdmk55", "ducdmk55@123"));
-		System.out.println("Size:"
-				+ jcloudsSwift.getFileSize("input", "ducdmk55-upload"));
+		// System.out.println("Size:"
+		// + jcloudsSwift.getFileSize("input", "ducdmk55-upload"));
+
+		List<hust.icse.bio.service.Container> containerList = jcloudsSwift
+				.listContainers("ducdmk55");
+		for (hust.icse.bio.service.Container container : containerList) {
+			System.out.println("Container name: :" + container.getName());
+			System.out.println("bytesUsed: " + container.getByteUsed()
+					+ " and object count: " + container.getObjectCount());
+			List<hust.icse.bio.service.File> fileList = container.getFileList();
+			for (hust.icse.bio.service.File file : fileList) {
+				System.out.println("\tFilename: " + file.getName());
+				System.out.println("\tBytes: " + file.getBytes());
+			}
+		}
 		jcloudsSwift.close();
 	}
 
@@ -195,11 +207,48 @@ public class StorageManagement implements Closeable {
 				continue;
 			}
 			hust.icse.bio.service.Container cont = new hust.icse.bio.service.Container();
-			cont.setByteUsed(container.getBytesUsed());
 			cont.setName(container.getName());
-			cont.setObjectCount(container.getObjectCount());
-			cont.setFileList(containerDetails(cont.getName()));
-			containerList.add(cont);
+			HttpClient httpClient = HttpClientBuilder.create().build();
+			try {
+				String httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
+						+ CloudConfig.bioServiceTenantID + "/"
+						+ container.getName() + "?format=json";
+				String token = this.getToken();
+				if (token == null) {
+					System.out.println("Null token, Authorize Failed!");
+				} else {
+					HttpGet fileSizeRequest = new HttpGet(httpRequestLink);
+					fileSizeRequest.addHeader("X-Auth-Token", token);
+					HttpResponse response = httpClient.execute(fileSizeRequest);
+					// proceed only if status code = 200
+
+					if (response.getStatusLine().getStatusCode() == 200) {
+						cont.setByteUsed(Long.valueOf(response.getFirstHeader(
+								"X-Container-Bytes-Used").getValue()));
+						cont.setObjectCount(Long.valueOf(response
+								.getFirstHeader("X-Container-Object-Count")
+								.getValue()));
+					}
+				}
+
+			} catch (Exception ex) {
+				return null;
+			}
+			// cont.setObjectCount(container.getObjectCount());
+			// cont.setByteUsed(container.getBytesUsed());
+
+			try {
+				cont.setFileList(containerDetails(cont.getName()));
+				containerList.add(cont);
+			} catch (ClientProtocolException e) {
+				continue;
+			} catch (IOException e) {
+				continue;
+			} catch (RuntimeException e) {
+				System.err.println("Deleted Container");
+				continue;
+			}
+
 		}
 		return containerList;
 	}
@@ -323,7 +372,7 @@ public class StorageManagement implements Closeable {
 					+ CloudConfig.bioServiceTenantID + "/" + containerName
 					+ "?format=json";
 			String token = this.getToken();
-			System.out.println(token);
+			// System.out.println(token);
 			if (token == null) {
 				System.out.println("Null token, Authorize Failed!");
 				return -1;
@@ -354,44 +403,45 @@ public class StorageManagement implements Closeable {
 	}
 
 	public ArrayList<hust.icse.bio.service.File> containerDetails(
-			String containerName) {
+			String containerName) throws ClientProtocolException, IOException {
 		ArrayList<hust.icse.bio.service.File> resultList = null;
 		HttpClient httpClient = HttpClientBuilder.create().build();
-		try {
-			String httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
-					+ CloudConfig.bioServiceTenantID + "/" + containerName
-					+ "?format=json";
-			String token = this.getToken();
-			if (token == null) {
-				System.out.println("Null token, Authorize Failed!");
-				return resultList;
-			} else {
-				HttpGet fileSizeRequest = new HttpGet(httpRequestLink);
-				fileSizeRequest.addHeader("X-Auth-Token", token);
-				HttpResponse response = httpClient.execute(fileSizeRequest);
-				// proceed only if status code = 200
+		// try {
+		String httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
+				+ CloudConfig.bioServiceTenantID + "/" + containerName
+				+ "?format=json";
+		String token = this.getToken();
+		if (token == null) {
+			System.out.println("Null token, Authorize Failed!");
+			return resultList;
+		} else {
+			HttpGet fileSizeRequest = new HttpGet(httpRequestLink);
+			fileSizeRequest.addHeader("X-Auth-Token", token);
+			HttpResponse response = httpClient.execute(fileSizeRequest);
+			// proceed only if status code = 200
 
-				if (response.getStatusLine().getStatusCode() == 200) {
-					JSONArray array = new JSONArray(
-							EntityUtils.toString(response.getEntity()));
-					resultList = new ArrayList<hust.icse.bio.service.File>();
-					for (int i = 0; i < array.length(); i++) {
-						JSONObject object;
-						object = array.getJSONObject(i);
-						hust.icse.bio.service.File file = new hust.icse.bio.service.File();
-						file.setName(object.getString("name"));
-						file.setBytes(object.getLong("bytes"));
-						file.setFileURL(getFileLink(file.getName(),
-								containerName));
-						resultList.add(file);
-					}
+			if (response.getStatusLine().getStatusCode() == 200) {
+				JSONArray array = new JSONArray(EntityUtils.toString(response
+						.getEntity()));
+				resultList = new ArrayList<hust.icse.bio.service.File>();
+				for (int i = 0; i < array.length(); i++) {
+					JSONObject object;
+					object = array.getJSONObject(i);
+					hust.icse.bio.service.File file = new hust.icse.bio.service.File();
+					file.setName(object.getString("name"));
+					file.setBytes(object.getLong("bytes"));
+					file.setFileURL(getFileLink(file.getName(), containerName));
+					resultList.add(file);
 				}
-				return resultList;
-			}
-
-		} catch (Exception ex) {
-			return null;
+			} else
+				throw new RuntimeException("Container empty");
+			return resultList;
 		}
+
+		// } catch (Exception ex) {
+		// System.out.println("setfail");
+		// return null;
+		// }
 
 	}
 
