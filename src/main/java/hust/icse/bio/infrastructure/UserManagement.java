@@ -1,6 +1,5 @@
 package hust.icse.bio.infrastructure;
 
-import java.util.Calendar;
 import java.util.NoSuchElementException;
 
 import org.jclouds.ContextBuilder;
@@ -150,15 +149,18 @@ public class UserManagement {
 		User user = UserManagement.getInstance().authenticate("ducdmk55",
 				"ducdmk55@123");
 		long startTime = System.currentTimeMillis();
-		VM vm = user.getManager().launchInstance("test01",
-				CloudConfig.ubuntuImage, "m1.small");
+		// VM vm = user.getManager().launchInstance("test01",
+		// CloudConfig.ubuntuImage, "m1.small");
+		System.out.println("Flavor create:"
+				+ user.getManager().createFlavor("testFlavor", 2, 1026, 5));
+		;
 		long endTime = System.currentTimeMillis();
 		System.err.println("VM Creation time:" + (endTime - startTime) / 1000);
-		startTime = System.currentTimeMillis();
-		String snapshotID = vm.createSnapshot("testSnapshot");
-		endTime = System.currentTimeMillis();
-		System.err.println("Snapshots " + snapshotID + " Creation time:"
-				+ (endTime - startTime) / 1000);
-		user.getManager().terminateInstance(vm);
+		// startTime = System.currentTimeMillis();
+		// String snapshotID = vm.createSnapshot("testSnapshot");
+		// endTime = System.currentTimeMillis();
+		// System.err.println("Snapshots " + snapshotID + " Creation time:"
+		// + (endTime - startTime) / 1000);
+		// user.getManager().terminateInstance(vm);
 	}
 }

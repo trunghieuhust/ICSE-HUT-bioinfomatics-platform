@@ -449,6 +449,19 @@ public class VMmanagement implements Closeable {
 		return address;
 	}
 
+	// TODO create flavor
+	public boolean createFlavor(String flavorName, int vcpu, int ram, int disk) {
+		FlavorApi flavorApi = context.adminNovaApi
+				.getFlavorApiForZone(context.defaultZone);
+		Flavor flavor = Flavor.builder().name(flavorName).id("").vcpus(vcpu)
+				.ram(ram).disk(disk).build();
+		Flavor newFlavor = flavorApi.create(flavor);
+		if (newFlavor != null) {
+			return true;
+		} else
+			return false;
+	}
+
 	public void close() throws IOException {
 		Closeables.close(context.novaApi, true);
 	}
