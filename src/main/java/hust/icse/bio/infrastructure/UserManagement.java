@@ -2,6 +2,12 @@ package hust.icse.bio.infrastructure;
 
 import java.util.NoSuchElementException;
 
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.util.EntityUtils;
 import org.jclouds.ContextBuilder;
 import org.jclouds.openstack.keystone.v2_0.KeystoneApi;
 import org.jclouds.openstack.keystone.v2_0.extensions.TenantAdminApi;
@@ -10,6 +16,7 @@ import org.jclouds.openstack.keystone.v2_0.features.TenantApi;
 import org.jclouds.openstack.keystone.v2_0.features.UserApi;
 import org.jclouds.openstack.keystone.v2_0.options.CreateUserOptions;
 import org.jclouds.rest.AuthorizationException;
+import org.json.JSONObject;
 
 import com.google.common.base.Optional;
 
@@ -33,7 +40,7 @@ public class UserManagement {
 	 * @return User object if authentication successful, null if failed.
 	 * 
 	 */
-	public User authenticate(String username, String password) {
+	public User authenticate1(String username, String password) {
 		Optional<? extends UserApi> userApis = keystoneApi.getUserApi();
 		Optional<? extends TenantApi> tenantApis = keystoneApi.getTenantApi();
 		if (userApis.isPresent() && tenantApis.isPresent()) {
@@ -72,6 +79,50 @@ public class UserManagement {
 			return null;
 		} else
 			return null;
+	}
+
+	public User authenticate(String name, String password) {
+		// TODO
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		try {
+			String httpRequestLink = "http://192.168.50.12:35357/v2.0/tokens";
+			HttpPost request = new HttpPost(httpRequestLink);
+			String json_data = null;
+			if (!name.equals("admin")) {
+				json_data = "{\"auth\": {\"tenantName\": \""
+						+ CloudConfig.bioServiceTenantName
+						+ "\",\"passwordCredentials\": {\"username\": \""
+						+ name + "\",\"password\": \"" + password + "\"}}}";
+			} else {
+				json_data = "{\"auth\": {\"tenantName\": \"" + "admin"
+						+ "\",\"passwordCredentials\": {\"username\": \""
+						+ name + "\",\"password\": \"" + password + "\"}}}";
+			}
+			StringEntity params = new StringEntity(json_data);
+			request.addHeader("content-type", "application/json");
+			request.setEntity(params);
+			HttpResponse response = httpClient.execute(request);
+			// proceed only if status code = 200
+			if (response.getStatusLine().getStatusCode() == 200) {
+				JSONObject rootObject = new JSONObject(
+						EntityUtils.toString(response.getEntity()));
+				User user = new User(name, password);
+				JSONObject userObject = rootObject.getJSONObject("access")
+						.getJSONObject("user");
+				System.out.println();
+				user.setUserID(userObject.getString("id"));
+				if (!name.equals("admin")) {
+					user.setAdmin(false);
+				} else {
+					user.setAdmin(true);
+				}
+				return user;
+			} else
+				return null;
+		} catch (Exception ex) {
+			// handle exception here
+			return null;
+		}
 	}
 
 	public boolean createUser(String username, String password) {
@@ -146,21 +197,24 @@ public class UserManagement {
 	}
 
 	public static void main(String[] args) {
-		User user = UserManagement.getInstance().authenticate("ducdmk55",
-				"ducdmk55@123");
+		User user = UserManagement.getInstance().authenticate("admin",
+				CloudConfig.adminCredentials);
 		long startTime = System.currentTimeMillis();
-		// VM vm = user.getManager().launchInstance("test01",
-		// CloudConfig.ubuntuImage, "m1.small");
-		System.out.println("Flavor create:"
-				+ user.getManager().createFlavor("testFlavor", 2, 1026, 5));
-		;
+		// System.out.println(user.getStorageManagement().getFileSize(
+		// "cirros-0.3.4-x86_64-disk.img", "abc"));
+		// VM vm = user.getManager().launchInstance("test01", "cloud-bio-v5",
+		// "m1.small");
 		long endTime = System.currentTimeMillis();
 		System.err.println("VM Creation time:" + (endTime - startTime) / 1000);
+		System.out.println("isAdmin:" + user.isAdmin());
+		user.getStorageManagement().uploadFileFromPath("cloudfuse-config.sh",
+				"abc");
+		// user.getManager().terminateInstance(vm);
 		// startTime = System.currentTimeMillis();
 		// String snapshotID = vm.createSnapshot("testSnapshot");
 		// endTime = System.currentTimeMillis();
 		// System.err.println("Snapshots " + snapshotID + " Creation time:"
 		// + (endTime - startTime) / 1000);
-		// user.getManager().terminateInstance(vm);
+
 	}
 }

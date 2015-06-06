@@ -13,12 +13,20 @@ public class User {
 	private StorageManagement storage;
 	private VMmanagement manager;
 	private String userIdentity;
+	private boolean isAdmin;
 
 	public User(String username, String password) {
 		this.username = username;
 		this.password = password;
-		this.userIdentity = CloudConfig.bioServiceTenantName + ":"
-				+ this.username;
+		if (!username.equals("admin")) {
+			this.userIdentity = CloudConfig.bioServiceTenantName + ":"
+					+ this.username;
+			this.isAdmin = false;
+		} else {
+			this.userIdentity = "admin:" + this.username;
+			this.isAdmin = true;
+		}
+
 		this.storage = new StorageManagement(this);
 		this.setKeypair();
 		this.manager = new VMmanagement(this);
@@ -34,6 +42,14 @@ public class User {
 		} catch (IOException e) {
 			System.out.println("Keypair not found");
 		}
+	}
+
+	public void setAdmin(boolean isAdmin) {
+		this.isAdmin = isAdmin;
+	}
+
+	public boolean isAdmin() {
+		return this.isAdmin;
 	}
 
 	public String getUsername() {
