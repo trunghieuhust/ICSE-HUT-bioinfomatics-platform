@@ -291,11 +291,19 @@ public class StorageManagement implements Closeable {
 		try {
 			String httpRequestLink = "http://192.168.50.12:35357/v2.0/tokens";
 			HttpPost request = new HttpPost(httpRequestLink);
-			String json_data = "{\"auth\": {\"tenantName\": \""
-					+ CloudConfig.bioServiceTenantName
-					+ "\",\"passwordCredentials\": {\"username\": \""
-					+ this.user.getUsername() + "\",\"password\": \""
-					+ this.user.getPassword() + "\"}}}";
+			String json_data;
+			if (!this.user.getUsername().equals("admin")) {
+				json_data = "{\"auth\": {\"tenantName\": \""
+						+ CloudConfig.bioServiceTenantName
+						+ "\",\"passwordCredentials\": {\"username\": \""
+						+ this.user.getUsername() + "\",\"password\": \""
+						+ this.user.getPassword() + "\"}}}";
+			} else {
+				json_data = "{\"auth\": {\"tenantName\": \"" + "admin"
+						+ "\",\"passwordCredentials\": {\"username\": \""
+						+ this.user.getUsername() + "\",\"password\": \""
+						+ this.user.getPassword() + "\"}}}";
+			}
 			StringEntity params = new StringEntity(json_data);
 			request.addHeader("content-type", "application/json");
 			request.setEntity(params);
@@ -319,9 +327,16 @@ public class StorageManagement implements Closeable {
 	public long getFileSize(String fileName, String containerName) {
 		HttpClient httpClient = HttpClientBuilder.create().build();
 		try {
-			String httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
-					+ CloudConfig.bioServiceTenantID + "/" + containerName
-					+ "?format=json";
+			String httpRequestLink;
+			if (!this.user.getUsername().equals("admin")) {
+				httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
+						+ CloudConfig.bioServiceTenantID + "/" + containerName
+						+ "?format=json";
+			} else {
+				httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
+						+ CloudConfig.adminTenantID + "/" + containerName
+						+ "?format=json";
+			}
 			String token = this.getToken();
 			System.out.println(token);
 			if (token == null) {
@@ -358,9 +373,16 @@ public class StorageManagement implements Closeable {
 		ArrayList<hust.icse.bio.service.File> resultList = null;
 		HttpClient httpClient = HttpClientBuilder.create().build();
 		try {
-			String httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
-					+ CloudConfig.bioServiceTenantID + "/" + containerName
-					+ "?format=json";
+			String httpRequestLink;
+			if (!this.user.getUsername().equals("admin")) {
+				httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
+						+ CloudConfig.bioServiceTenantID + "/" + containerName
+						+ "?format=json";
+			} else {
+				httpRequestLink = "http://192.168.50.188:8080/v1/AUTH_"
+						+ CloudConfig.adminTenantID + "/" + containerName
+						+ "?format=json";
+			}
 			String token = this.getToken();
 			if (token == null) {
 				System.out.println("Null token, Authorize Failed!");

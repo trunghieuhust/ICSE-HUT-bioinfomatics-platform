@@ -3,6 +3,7 @@ package hust.icse.bio.infrastructure;
 public interface CloudConfig {
 	public static final String adminIdentity = "admin:admin";
 	public static final String adminCredentials = "Bkcloud12@Icse@2015";
+	public static final String adminTenantID = "e9718a4e5275474f8b157edf2167022b";
 	public static final String bioServiceTenantName = "students";
 	public static final String bioServiceTenantID = "1a1c2b5a4e3e4ff482fa557768aa0f94";
 	public static final String memberRoleID = "ad8f8d1d76b94efdbcf6cf5c3f781373";

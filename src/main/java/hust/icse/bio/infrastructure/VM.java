@@ -97,7 +97,7 @@ public class VM {
 
 	public void runInitScript() {
 		System.err.println("runInitScript:VM ID: " + ID);
-		executeCommand("wget " + CloudConfig.initScriptLink);
+		// executeCommand("wget " + CloudConfig.initScriptLink);
 		executeCommand("chmod u+x cloudfuse-config.sh");
 		executeCommand("sed -i '1s/^/password=\"" + context.userPassword
 				+ "\"\\n/' cloudfuse-config.sh");

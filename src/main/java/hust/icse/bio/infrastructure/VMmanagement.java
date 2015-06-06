@@ -158,9 +158,16 @@ public class VMmanagement implements Closeable {
 	private String getInstanceLog(String serverID) {
 		HttpClient httpClient = HttpClientBuilder.create().build();
 		try {
-			String httpRequestLink = "http://192.168.50.12:8774/v2/"
-					+ CloudConfig.bioServiceTenantID + "/servers/" + serverID
-					+ "/action";
+			String httpRequestLink;
+			if (!this.user.getUsername().equals("admin")) {
+				httpRequestLink = "http://192.168.50.12:8774/v2/"
+						+ CloudConfig.bioServiceTenantID + "/servers/"
+						+ serverID + "/action";
+			} else {
+				httpRequestLink = "http://192.168.50.12:8774/v2/"
+						+ CloudConfig.adminTenantID + "/servers/" + serverID
+						+ "/action";
+			}
 			String token = this.getToken();
 			if (token == null)
 				return null;
@@ -193,11 +200,19 @@ public class VMmanagement implements Closeable {
 		try {
 			String httpRequestLink = "http://192.168.50.12:35357/v2.0/tokens";
 			HttpPost request = new HttpPost(httpRequestLink);
-			String json_data = "{\"auth\": {\"tenantName\": \""
-					+ CloudConfig.bioServiceTenantName
-					+ "\",\"passwordCredentials\": {\"username\": \""
-					+ this.user.getUsername() + "\",\"password\": \""
-					+ this.user.getPassword() + "\"}}}";
+			String json_data;
+			if (!this.user.getUsername().equals("admin")) {
+				json_data = "{\"auth\": {\"tenantName\": \""
+						+ CloudConfig.bioServiceTenantName
+						+ "\",\"passwordCredentials\": {\"username\": \""
+						+ this.user.getUsername() + "\",\"password\": \""
+						+ this.user.getPassword() + "\"}}}";
+			} else {
+				json_data = "{\"auth\": {\"tenantName\": \"" + "admin"
+						+ "\",\"passwordCredentials\": {\"username\": \""
+						+ this.user.getUsername() + "\",\"password\": \""
+						+ this.user.getPassword() + "\"}}}";
+			}
 			StringEntity params = new StringEntity(json_data);
 			request.addHeader("content-type", "application/json");
 			request.setEntity(params);
@@ -333,8 +348,15 @@ public class VMmanagement implements Closeable {
 		} else {
 			HttpClient httpClient = HttpClientBuilder.create().build();
 			try {
-				String request = "http://192.168.50.12:8774/v2/"
-						+ CloudConfig.bioServiceTenantID + "/os-floating-ips";
+				String request;
+				if (!this.user.getUsername().equals("admin")) {
+					request = "http://192.168.50.12:8774/v2/"
+							+ CloudConfig.bioServiceTenantID
+							+ "/os-floating-ips";
+				} else {
+					request = "http://192.168.50.12:8774/v2/"
+							+ CloudConfig.adminTenantID + "/os-floating-ips";
+				}
 				String token = this.getToken();
 				// System.out.println(token);
 				if (token == null) {
@@ -377,8 +399,14 @@ public class VMmanagement implements Closeable {
 	private String getAvailableFloatingIP() {
 		HttpClient httpClient = HttpClientBuilder.create().build();
 		try {
-			String request = "http://192.168.50.12:8774/v2/"
-					+ CloudConfig.bioServiceTenantID + "/os-floating-ips";
+			String request;
+			if (!this.user.getUsername().equals("admin")) {
+				request = "http://192.168.50.12:8774/v2/"
+						+ CloudConfig.bioServiceTenantID + "/os-floating-ips";
+			} else {
+				request = "http://192.168.50.12:8774/v2/"
+						+ CloudConfig.adminTenantID + "/os-floating-ips";
+			}
 			String token = this.getToken();
 			// System.out.println(token);
 			if (token == null) {
