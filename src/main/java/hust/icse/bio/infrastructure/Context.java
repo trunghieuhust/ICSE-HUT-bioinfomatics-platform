@@ -6,7 +6,6 @@ import org.jclouds.ContextBuilder;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.openstack.glance.v1_0.GlanceApi;
-import org.jclouds.openstack.glance.v1_0.features.ImageApi;
 import org.jclouds.openstack.neutron.v2.NeutronApi;
 import org.jclouds.openstack.nova.v2_0.NovaApi;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
@@ -16,6 +15,7 @@ import com.google.inject.Module;
 
 public class Context {
 	public final NovaApi novaApi;
+	public final NovaApi adminNovaApi;
 	public final NeutronApi neutronApi;
 	public final ComputeServiceContext computeContext;
 	public final GlanceApi glanceApi;
@@ -39,6 +39,11 @@ public class Context {
 				.endpoint(CloudConfig.endpoint)
 				.credentials(user.getUserIdentity(), user.getPassword())
 				.buildApi(NovaApi.class);
+		adminNovaApi = ContextBuilder
+				.newBuilder(CloudConfig.novaProvider)
+				.endpoint(CloudConfig.endpoint)
+				.credentials(CloudConfig.adminIdentity,
+						CloudConfig.adminCredentials).buildApi(NovaApi.class);
 		neutronApi = ContextBuilder.newBuilder(CloudConfig.neutronProvider)
 				.endpoint(CloudConfig.endpoint)
 				.credentials(user.getUserIdentity(), user.getPassword())
