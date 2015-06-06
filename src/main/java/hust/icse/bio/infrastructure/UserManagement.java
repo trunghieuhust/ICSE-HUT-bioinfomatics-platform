@@ -82,7 +82,6 @@ public class UserManagement {
 	}
 
 	public User authenticate(String name, String password) {
-		// TODO
 		HttpClient httpClient = HttpClientBuilder.create().build();
 		try {
 			String httpRequestLink = "http://192.168.50.12:35357/v2.0/tokens";
@@ -197,18 +196,19 @@ public class UserManagement {
 	}
 
 	public static void main(String[] args) {
-		User user = UserManagement.getInstance().authenticate("admin",
-				CloudConfig.adminCredentials);
 		long startTime = System.currentTimeMillis();
-		// System.out.println(user.getStorageManagement().getFileSize(
-		// "cirros-0.3.4-x86_64-disk.img", "abc"));
-		// VM vm = user.getManager().launchInstance("test01", "cloud-bio-v5",
-		// "m1.small");
+		User user = UserManagement.getInstance().authenticate("admin",
+				"Bkcloud12@Icse@2015");
+		String[] flavorList = user.getManager().listFlavor();
+		System.out.println("Flavors List:");
+		for (int i = 0; i < flavorList.length; i++) {
+			System.out.println(flavorList[i]);
+		}
 		long endTime = System.currentTimeMillis();
 		System.err.println("VM Creation time:" + (endTime - startTime) / 1000);
-		System.out.println("isAdmin:" + user.isAdmin());
-		user.getStorageManagement().uploadFileFromPath("cloudfuse-config.sh",
-				"abc");
+
+		// user.getStorageManagement().uploadFileFromPath("cloudfuse-config.sh",
+		// "abc");
 		// user.getManager().terminateInstance(vm);
 		// startTime = System.currentTimeMillis();
 		// String snapshotID = vm.createSnapshot("testSnapshot");
