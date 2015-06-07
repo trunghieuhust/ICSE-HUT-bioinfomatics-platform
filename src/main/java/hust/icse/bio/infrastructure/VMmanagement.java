@@ -17,7 +17,6 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
-import org.jclouds.compute.ComputeService;
 import org.jclouds.openstack.neutron.v2.domain.Network;
 import org.jclouds.openstack.neutron.v2.features.NetworkApi;
 import org.jclouds.openstack.nova.v2_0.domain.Address;
@@ -55,7 +54,7 @@ public class VMmanagement implements Closeable {
 		return server.getStatus();
 	}
 
-	private void listServers() {
+	public void listServers() {
 		for (String zone : context.zones) {
 			ServerApi serverApi = context.novaApi.getServerApiForZone(zone);
 
@@ -262,6 +261,51 @@ public class VMmanagement implements Closeable {
 		throw new NullPointerException("Flavor not found");
 	}
 
+	public String[] listFlavor() {
+		HttpClient httpClient = HttpClientBuilder.create().build();
+		try {
+			String request;
+			if (!this.user.getUsername().equals("admin")) {
+				request = "http://192.168.50.12:8774/v2/"
+						+ CloudConfig.bioServiceTenantID + "/flavors";
+			} else {
+				request = "http://192.168.50.12:8774/v2/"
+						+ CloudConfig.adminTenantID + "/flavors";
+			}
+			String token = this.getToken();
+			// System.out.println(token);
+			if (token == null) {
+				System.out.println("Null token, Authorize Failed!");
+				return null;
+			} else {
+				HttpGet listFlavorIpRequest = new HttpGet(request);
+				listFlavorIpRequest.addHeader("content-type",
+						"application/json");
+				listFlavorIpRequest.addHeader("X-Auth-Token", token);
+				HttpResponse response = httpClient.execute(listFlavorIpRequest);
+				if (response.getStatusLine().getStatusCode() == 200) {
+					JSONObject rootObject = new JSONObject(
+							EntityUtils.toString(response.getEntity()));
+					JSONArray flavorArray = rootObject.getJSONArray("flavors");
+					String[] result = new String[flavorArray.length()];
+					for (int i = 0; i < flavorArray.length(); i++) {
+						result[i] = flavorArray.getJSONObject(i).getString(
+								"name");
+					}
+					return result;
+				} else {
+					System.out
+							.println(response.getStatusLine().getStatusCode());
+				}
+				return null;
+			}
+		} catch (Exception ex) {
+			// handle exception here
+			ex.printStackTrace();
+			return null;
+		}
+	}
+
 	private String getImageId(String image) {
 		ImageApi imageApi = context.novaApi
 				.getImageApiForZone(context.defaultZone);
@@ -319,26 +363,6 @@ public class VMmanagement implements Closeable {
 		}
 		throw new NullPointerException("Server not found");
 	}
-
-	// public String getOrCreateFloatingIP() {
-	// List<FloatingIP> freeIP = new LinkedList<FloatingIP>();
-	// FloatingIPApi floatingIPApi = context.novaApi
-	// .getFloatingIPExtensionForZone(context.defaultZone).get();
-	// Iterator<? extends FloatingIP> floatingIP = floatingIPApi.list()
-	// .iterator();
-	// while (floatingIP.hasNext()) {
-	// FloatingIP ip = floatingIP.next();
-	// if (ip.getInstanceId() == null) {
-	// freeIP.add(ip);
-	// }
-	// }
-	// if (freeIP.size() > 0) {
-	// return freeIP.get(0).getIp();
-	// } else {
-	// return floatingIPApi.allocateFromPool(this.getNetworkId("ext_net"))
-	// .getIp();
-	// }
-	// }
 
 	private String getOrCreateFloatingIP() {
 		String availableIP = getAvailableFloatingIP();
@@ -499,12 +523,4 @@ public class VMmanagement implements Closeable {
 		Closeables.close(context.novaApi, true);
 	}
 
-	public void support() {
-		ComputeService client = context.computeContext.getComputeService();
-	}
-	// public static void main(String[] args) {
-	// User user = new User("ducdmk55", "ducdmk55@123");
-	// System.out.println(user.getManager().caculateUpTime(
-	// "68187912-330e-4d67-b23d-139f7fe91934"));
-	// }
 }
