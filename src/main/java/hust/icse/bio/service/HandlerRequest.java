@@ -2,8 +2,14 @@ package hust.icse.bio.service;
 
 import hust.icse.bio.infrastructure.User;
 import hust.icse.bio.infrastructure.UserManagement;
+import hust.icse.bio.tools.ToolManagement;
 import hust.icse.bio.workflow.WorkflowManagement;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,9 +76,8 @@ public class HandlerRequest {
 			FileUploader uploadFile) {
 		User user = getUser(username, password);
 		DataHandler dataHandler = uploadFile.getHandler();
-		String etag = user.getStorageManagement().uploadFileFromInputStream(
-				dataHandler, user.getStorageManagement().getUploadContainer());
-		System.out.println("etag" + etag);
+		user.getStorageManagement().uploadFileFromInputStream(dataHandler,
+				user.getStorageManagement().getUploadContainer());
 		return 10;
 	}
 
@@ -138,6 +143,34 @@ public class HandlerRequest {
 					user, workflowName);
 		} else {
 			return null;
+		}
+	}
+
+	public boolean uploadToolPackage(String username, String password,
+			FileUploader toolPackage) {
+		User user = getUser(username, password);
+		if (user != null) {
+			DataHandler handler = toolPackage.getHandler();
+			File toolpack = new java.io.File("/tmp/" + toolPackage.getName());
+			try {
+				InputStream is = handler.getInputStream();
+
+				OutputStream os = new FileOutputStream(toolpack);
+				byte[] b = new byte[100000];
+				int bytesRead = 0;
+				while ((bytesRead = is.read(b)) != -1) {
+					os.write(b, 0, bytesRead);
+				}
+				os.flush();
+				os.close();
+				is.close();
+
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			return ToolManagement.getInstance().addToolPackage(toolpack, user);
+		} else {
+			return false;
 		}
 	}
 

@@ -22,4 +22,6 @@ public abstract class DAOFactory {
 	public abstract ToolDAO getToolDAO();
 
 	public abstract ResultDAO getResultDAO();
+
+	public abstract PackageDAO getPackageDAO();
 }

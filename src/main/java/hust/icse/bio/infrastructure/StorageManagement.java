@@ -57,6 +57,19 @@ public class StorageManagement implements Closeable {
 				"ducdmk55", "ducdmk55@123"));
 		System.out.println("Size:"
 				+ jcloudsSwift.getFileSize("input", "ducdmk55-upload"));
+		List<hust.icse.bio.service.Container> list = jcloudsSwift
+				.listContainers("ducmdmk55");
+		for (hust.icse.bio.service.Container container : list) {
+			System.out.println("Container name: :" + container.getName());
+			System.out.println("bytesUsed: " + container.getByteUsed()
+					+ " abd object count: " + container.getObjectCount());
+			List<hust.icse.bio.service.File> fileList = container.getFileList();
+			for (hust.icse.bio.service.File file : fileList) {
+				System.out.println("\tFilename: " + file.getName());
+				System.out.println("\tBytes: " + file.getBytes());
+			}
+
+		}
 		jcloudsSwift.close();
 	}
 
@@ -439,6 +452,10 @@ public class StorageManagement implements Closeable {
 
 	public String getUploadContainer() {
 		return user.getUsername() + "-upload";
+	}
+
+	public String getPrivateRepository() {
+		return user.getUsername() + "-repository";
 	}
 
 	public String getUploadFolder() {

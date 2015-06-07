@@ -40,4 +40,9 @@ public class MySQLDAOFactory extends DAOFactory {
 		return new MySQLResultDAO();
 	}
 
+	@Override
+	public PackageDAO getPackageDAO() {
+		return new MySQLPackageDAO();
+	}
+
 }

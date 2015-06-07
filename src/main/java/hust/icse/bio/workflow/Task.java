@@ -253,7 +253,7 @@ public class Task implements Runnable {
 		String[] output = { "o1", "o2" };
 		String[] outputValue = { "output1", "output2" };
 		Tool tool = new Tool("alias", "name", "1.0", "package",
-				"-i={$in1,$in2} -o={$o1,$o2}");
+				"-i={$in1,$in2} -o={$o1,$o2}", false);
 		task.setUser(new User("ducdmk55", "ducdmk55@123"));
 		task.setTool(tool);
 		task.setInput(input);

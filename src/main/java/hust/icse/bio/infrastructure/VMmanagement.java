@@ -483,7 +483,12 @@ public class VMmanagement implements Closeable {
 				.getFlavorApiForZone(context.defaultZone);
 		Flavor flavor = Flavor.builder().name(flavorName).id("").vcpus(vcpu)
 				.ram(ram).disk(disk).build();
-		Flavor newFlavor = flavorApi.create(flavor);
+		Flavor newFlavor = null;
+		try {
+			newFlavor = flavorApi.create(flavor);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		if (newFlavor != null) {
 			return true;
 		} else

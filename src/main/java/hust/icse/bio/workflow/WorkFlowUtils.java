@@ -1,5 +1,9 @@
 package hust.icse.bio.workflow;
 
+import hust.icse.bio.dao.DAOFactory;
+import hust.icse.bio.dao.ToolDAO;
+import hust.icse.bio.infrastructure.User;
+import hust.icse.bio.infrastructure.UserManagement;
 import hust.icse.bio.tools.Tool;
 
 import java.util.ArrayList;
@@ -60,7 +64,6 @@ public class WorkFlowUtils {
 			}
 			if (workflowElements.hasAttr(SAVE_AS_TEMPLATE)) {
 				String saveAs = workflowElements.attr(SAVE_AS_TEMPLATE);
-				System.out.println("saveAs: " + saveAs);
 				if (saveAs.equals("true")) {
 					info.setSaveAsTemplate(true);
 				} else {
@@ -118,6 +121,16 @@ public class WorkFlowUtils {
 		// System.out.println(toolsElement.size());
 		for (int i = 0; i < toolsElement.size(); i++) {
 			Tool tool = new Tool();
+			if (toolsElement.get(i).hasAttr(SAVE_AS_TEMPLATE)) {
+				String value = toolsElement.get(i).attr(SAVE_AS_TEMPLATE);
+//				System.out.println(toolsElement.get(i).toString());
+				if (value.equals("true")) {
+					tool.setNeedToSave(true);
+
+				} else {
+					tool.setNeedToSave(false);
+				}
+			}
 			tool.setAlias(toolsElement.get(i).select(ALIAS).text());
 			tool.setCommand(toolsElement.get(i).select(EXECUTE).attr(COMMAND));
 			tool.setName(toolsElement.get(i).select(NAME).text());
@@ -222,16 +235,31 @@ public class WorkFlowUtils {
 	}
 
 	public static void main(String[] args) {
-		String test = "<workflow name='2step' save-as-template='true'><activities><activity name='aligment'><task name='clustal1'><tool-alias>clustal</tool-alias><input-files in1='actin' in2='123'></input-files><output-files output='output1'></output-files><flavor>small</flavor></task><task name='clustal2'><tool-alias>clustalo2</tool-alias><input-files input='actin'></input-files><output-files output='output2'></output-files></task></activity><activity name='fasttree'><task name='fasttree'><tool-alias>fasttree</tool-alias><input-files input='output1'></input-files><output-files output='output-fasttree'></output-files><flavor>small</flavor></task></activity></activities></workflow><tools><tool><alias>clustal</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool><alias>clustalo2</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
+		String test = "<workflow name='2step' save-as-template='true'><activities><activity name='aligment'><task name='clustal1'><tool-alias>clustal</tool-alias><input-files in1='actin' in2='123'></input-files><output-files output='output1'></output-files><flavor>small</flavor></task><task name='clustal2'><tool-alias>clustalo2</tool-alias><input-files input='actin'></input-files><output-files output='output2'></output-files></task></activity><activity name='fasttree'><task name='fasttree'><tool-alias>fasttree</tool-alias><input-files input='output1'></input-files><output-files output='output-fasttree'></output-files><flavor>small</flavor></task></activity></activities></workflow><tools><tool save-as-template='true'><alias>clustal</alias><name>clustalo</name><version>1.2.1.custom/version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool save-as-template='true'><alias>clustalo2</alias><name>clustalo</name><version>1.2.2</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
 		// String map = WorkFlowUtils.getInstance().mapInputToTemplate(test,
 		// new String[] { "new", "new1", "new2", "output2" });
-		WorkflowInfo wf = getInstance().parse(TEST);
-		ArrayList<Activity> list = wf.getActivityList();
-		for (Activity activity : list) {
-			ArrayList<Task> taskList = activity.getTaskList();
-			for (Task task : taskList) {
-				System.out.println(task.toString());
+		WorkflowInfo wf = getInstance().parse(test);
+		// ArrayList<Activity> list = wf.getActivityList();
+		// for (Activity activity : list) {
+		// ArrayList<Task> taskList = activity.getTaskList();
+		// for (Task task : taskList) {
+		// System.out.println(task.toString());
+		// }
+		// }
+//		User user = UserManagement.getInstance().authenticate("ducdmk55",
+//				"ducdmk55@123");
+		ArrayList<Tool> toolList = wf.getToolList();
+		// ToolDAO toolDAO = DAOFactory.getDAOFactory(DAOFactory.MYSQL)
+		// .getToolDAO();
+		for (Tool tool : toolList) {
+			// boolean result = toolDAO.addTool(tool, user);
+			// System.err.println(result);
+			if (tool.isNeedToSave() == true) {
+				System.out.println(tool.toString());
 			}
 		}
+		// System.out.println(user.getUserID());
+		// Tool tool = toolDAO.getTool(user, "clustal1");
+		// System.out.println(tool.toString());
 	}
 }

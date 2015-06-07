@@ -87,4 +87,11 @@ public class BioServiceImpl implements BioService {
 				username, password, workflowName, inputValue);
 	}
 
+	@Override
+	public boolean uploadToolPackage(String username, String password,
+			FileUploader toolPackage) {
+		return HandlerRequest.getInstance().uploadToolPackage(username,
+				password, toolPackage);
+	}
+
 }

@@ -6,18 +6,20 @@ public class Tool {
 	private String version;
 	private String packageName;
 	private String command;
+	private boolean needToSave;
 
 	public Tool() {
 	}
 
 	public Tool(String alias, String name, String version, String packageName,
-			String command) {
+			String command, boolean needToSave) {
 		super();
 		this.alias = alias;
 		this.name = name;
 		this.version = version;
 		this.packageName = packageName;
 		this.command = command;
+		this.needToSave = needToSave;
 	}
 
 	public void setAlias(String alias) {
@@ -26,6 +28,14 @@ public class Tool {
 
 	public void setName(String name) {
 		this.name = name;
+	}
+
+	public boolean isNeedToSave() {
+		return needToSave;
+	}
+
+	public void setNeedToSave(boolean needToSave) {
+		this.needToSave = needToSave;
 	}
 
 	public void setVersion(String version) {

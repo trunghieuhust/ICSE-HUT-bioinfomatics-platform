@@ -68,6 +68,10 @@ public interface BioService {
 			@WebParam(name = "password") String password,
 			@WebParam(name = "containerName") String containerName,
 			@WebParam(name = "filename") String filename);
-	
-	
+
+	@WebMethod
+	public boolean uploadToolPackage(
+			@WebParam(name = "username") String username,
+			@WebParam(name = "password") String password,
+			@WebParam(name = "toolPackage") FileUploader toolPackage);
 }

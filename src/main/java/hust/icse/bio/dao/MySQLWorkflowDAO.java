@@ -69,7 +69,7 @@ public class MySQLWorkflowDAO implements WorkflowDAO {
 		String rawXML = null;
 		try {
 			PreparedStatement preparedStatement = conn
-					.prepareStatement("select rawXML from workflow_template where userID=? AND name=?");
+					.prepareStatement("SELECT rawXML FROM workflow_template WHERE userID=? AND name=?");
 			preparedStatement.setBytes(1, UUIDultis.UUIDtoByteArray(UUIDultis
 					.UUIDfromStringWithoutDashes(userID)));
 			preparedStatement.setString(2, name);
