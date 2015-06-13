@@ -24,4 +24,6 @@ public abstract class DAOFactory {
 	public abstract ResultDAO getResultDAO();
 
 	public abstract PackageDAO getPackageDAO();
+
+	public abstract StatiticsDAO getStatiticsDAO();
 }

@@ -7,6 +7,7 @@ import hust.icse.bio.service.State;
 import hust.icse.bio.service.TaskResult;
 import hust.icse.bio.service.TaskStatus;
 import hust.icse.bio.tools.Tool;
+import hust.icse.bio.tools.ToolManagement;
 
 import java.sql.Time;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
+import org.bouncycastle.asn1.cmp.OOBCertHash;
 import org.jclouds.openstack.glance.v1_0.domain.Image.Status;
 
 public class Task implements Runnable {
@@ -31,13 +33,14 @@ public class Task implements Runnable {
 	private UUID activityID;
 	private VM vm;
 	private static String image = "cloud-bio-v2";
-	private static String flavor = "m1.small";
+	private String flavor = "";
 	private User user;
 	private Tool tool;
 	private Date created_at;
 	private Date finished_at;
 	private long duration;
 	private static final int MAX_RETRY = 50;
+	private String flavorType;
 
 	// TODO input output nhieu file.
 	public Task() {
@@ -68,6 +71,10 @@ public class Task implements Runnable {
 		return finished_at;
 	}
 
+	public String getFlavorType() {
+		return flavorType;
+	}
+
 	public long getDuration() {
 		return duration;
 	}
@@ -78,6 +85,14 @@ public class Task implements Runnable {
 
 	public String[] getOutput() {
 		return output;
+	}
+
+	public String getFlavor() {
+		return flavor;
+	}
+
+	public void setFlavor(String flavor) {
+		this.flavor = flavor;
 	}
 
 	public TaskStatus getStatus() {
@@ -98,6 +113,10 @@ public class Task implements Runnable {
 
 	public void setInput(String[] input) {
 		this.input = input;
+	}
+
+	public void setFlavorType(String flavorType) {
+		this.flavorType = flavorType;
 	}
 
 	public void setOutput(String[] output) {
@@ -172,7 +191,7 @@ public class Task implements Runnable {
 		for (int i = 0; i < output.length; i++) {
 			sb.append("\n\t\t" + output[i] + ": " + outputValue[i]);
 		}
-
+		sb.append("\n\tFlavor: " + flavorType);
 		return sb.toString();
 		// return "\n\tTask : " + toolAlias + "\n\tTaskID: " +
 		// taskID.toString();
@@ -180,10 +199,12 @@ public class Task implements Runnable {
 
 	@Override
 	public void run() {
+
+		flavor = ToolManagement.getInstance().getFlavor(tool, user, flavorType);
 		created_at = Calendar.getInstance().getTime();
 		for (int i = 0; i < MAX_RETRY; i++) {
-			vm = user.getManager().launchInstance(taskID.toString(), image,
-					flavor);
+			vm = user.getManager().launchInstance(taskID.toString(),
+					ToolManagement.getInstance().getImage(tool, user), flavor);
 			if (vm == null) {
 				status.updateStatus(State.QUEUEING);
 				try {
@@ -195,6 +216,7 @@ public class Task implements Runnable {
 				break;
 			}
 		}
+		ToolManagement.getInstance().deployToVM(tool, vm, user);
 		status.updateStatus(State.STILL_BEING_PROCESSED);
 		vm.executeCommand(getCommand());
 		result.setOutputConsole(user.getStorageManagement().getFileLink(

@@ -94,4 +94,9 @@ public class BioServiceImpl implements BioService {
 				password, toolPackage);
 	}
 
+	@Override
+	public List<Statitics> getStatitics(String username, String password) {
+		return HandlerRequest.getInstance().getStatitics(username, password);
+	}
+
 }

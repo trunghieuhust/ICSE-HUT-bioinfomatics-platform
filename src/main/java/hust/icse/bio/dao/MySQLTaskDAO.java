@@ -15,7 +15,7 @@ public class MySQLTaskDAO implements TaskDAO {
 		try {
 			Connection conn = MySQLDAOFactory.createConnection();
 			PreparedStatement preparedStatement = conn
-					.prepareStatement("insert into task values (?,?,?,?,?,?,?,?,?,?)");
+					.prepareStatement("insert into task values (?,?,?,?,?,?,?,?,?,?,?)");
 			preparedStatement.setBytes(1,
 					UUIDultis.UUIDtoByteArray(task.getID()));
 			preparedStatement.setBytes(2,
@@ -31,6 +31,7 @@ public class MySQLTaskDAO implements TaskDAO {
 			preparedStatement.setLong(9, task.getDuration());
 			preparedStatement.setTimestamp(10, new java.sql.Timestamp(task
 					.getFinished_at().getTime()));
+			preparedStatement.setString(11, task.getFlavor());
 			preparedStatement.executeUpdate();
 			MySQLDAOFactory.returnConnection(conn);
 			return true;

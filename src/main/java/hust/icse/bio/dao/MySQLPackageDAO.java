@@ -7,6 +7,8 @@ import hust.icse.bio.utils.UUIDultis;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MySQLPackageDAO implements PackageDAO {
 
@@ -14,7 +16,7 @@ public class MySQLPackageDAO implements PackageDAO {
 	public boolean addPackage(User user, Package toolPackage) {
 		boolean result = false;
 		if (getPackage(user, toolPackage.getPackageName(),
-				toolPackage.getVersion()) != null) {
+				toolPackage.getVersion()).size() != 0) {
 			System.out.println("Package " + toolPackage.getPackageName()
 					+ " exist.");
 			result = false;
@@ -22,7 +24,7 @@ public class MySQLPackageDAO implements PackageDAO {
 			Connection conn = MySQLDAOFactory.createConnection();
 			try {
 				PreparedStatement preparedStatement = conn
-						.prepareStatement("INSERT INTO package(package_name, version, provider, architecture, installed_size, flavor,userID, is_main_repo) VALUES (?,?,?,?,?,?,?,?)");
+						.prepareStatement("INSERT INTO package(package_name, version, provider, architecture, installed_size, flavor,userID, is_main_repo, depends) VALUES (?,?,?,?,?,?,?,?,?)");
 				preparedStatement.setString(1, toolPackage.getPackageName());
 				preparedStatement.setString(2, toolPackage.getVersion());
 				preparedStatement.setString(3, toolPackage.getProviders());
@@ -37,6 +39,7 @@ public class MySQLPackageDAO implements PackageDAO {
 				} else {
 					preparedStatement.setInt(8, 0);
 				}
+				preparedStatement.setString(9, toolPackage.getDepends());
 				result = preparedStatement.execute();
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -48,20 +51,20 @@ public class MySQLPackageDAO implements PackageDAO {
 	}
 
 	@Override
-	public Package getPackage(User user, String packageName, String version) {
+	public List<Package> getPackage(User user, String packageName,
+			String version) {
 		Connection conn = MySQLDAOFactory.createConnection();
-		Package pack = null;
+		List<Package> result = new ArrayList<Package>();
 		try {
 			PreparedStatement preparedStatement = conn
-					.prepareStatement("SELECT * FROM package WHERE package_name=? AND version=? AND userID=?");
+					.prepareStatement("SELECT * FROM package WHERE package_name=? AND version=?");
 			preparedStatement.setString(1, packageName);
 			preparedStatement.setString(2, version);
-			preparedStatement.setBytes(3, UUIDultis.UUIDtoByteArray(UUIDultis
-					.UUIDfromStringWithoutDashes(user.getUserID())));
 			preparedStatement.execute();
 			ResultSet resultSet = preparedStatement.getResultSet();
-			if (resultSet.next()) {
-				pack = new Package();
+			result = new ArrayList<Package>();
+			while (resultSet.next()) {
+				Package pack = new Package();
 				pack.setArchitecture(resultSet.getString("architecture"));
 				pack.setFlavor(resultSet.getString("flavor"));
 				pack.setInstalledSize(resultSet.getLong("installed_size"));
@@ -70,14 +73,20 @@ public class MySQLPackageDAO implements PackageDAO {
 				pack.setUserID(UUIDultis.UUIDFromByteArray(
 						resultSet.getBytes("userID")).toString());
 				pack.setVersion(resultSet.getString("version"));
-
+				pack.setDepends(resultSet.getString("depends"));
+				if (resultSet.getInt("is_main_repo") == 0) {
+					pack.setMainRepo(false);
+				} else {
+					pack.setMainRepo(true);
+				}
+				result.add(pack);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			MySQLDAOFactory.returnConnection(conn);
 		}
-		return pack;
+		return result;
 	}
 
 	@Override

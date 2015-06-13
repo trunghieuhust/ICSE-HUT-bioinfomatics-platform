@@ -35,6 +35,7 @@ public class WorkFlowUtils {
 	private final static String EXECUTE = "execute";
 	private final static String SAVE_AS_TEMPLATE = "save-as-template";
 	private final static String AUTO_DELETE_AFTER = "auto-delete-after";
+	private final static String FLAVOR = "flavor";
 	private final static String TEST = "<workflow name='2step' save-as-template='true'><activities><activity name='aligment'><task name='clustal1'><tool-alias>clustal</tool-alias><input-files in1='actin' in2='actin2' in3='actin3'></input-files><output-files out1='output1' out2='output2'></output-files><flavor>small</flavor></task><task name='clustal2'><tool-alias>clustalo2</tool-alias><input-files input='actin'></input-files><output-files output='output2'></output-files></task></activity><activity name='fasttree'><task name='fasttree'><tool-alias>fasttree</tool-alias><input-files input='output1'></input-files><output-files output='output-fasttree'></output-files><flavor>small</flavor></task></activity></activities></workflow><tools><tool><alias>clustal</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output -v'></execute></tool><tool><alias>clustalo2</alias><name>clustalo</name><version>1.2.1</version><package>clustalo</package><execute command='--infile=$input --outfile=$output --outfmt=clustal -v'></execute></tool><tool><alias>fasttree</alias><name>fasttree</name><version>2.1</version><package>fasttree</package><execute command='$input > $output'></execute></tool></tools>";
 
 	public WorkFlowUtils() {
@@ -123,7 +124,7 @@ public class WorkFlowUtils {
 			Tool tool = new Tool();
 			if (toolsElement.get(i).hasAttr(SAVE_AS_TEMPLATE)) {
 				String value = toolsElement.get(i).attr(SAVE_AS_TEMPLATE);
-//				System.out.println(toolsElement.get(i).toString());
+				// System.out.println(toolsElement.get(i).toString());
 				if (value.equals("true")) {
 					tool.setNeedToSave(true);
 
@@ -187,6 +188,8 @@ public class WorkFlowUtils {
 			}
 
 			task.setName(taskElement.get(i).attr(NAME));
+			task.setFlavorType(taskElement.select(FLAVOR).text());
+			System.out.println(task.toString());
 			tasks.add(task);
 		}
 		return tasks;
@@ -246,8 +249,8 @@ public class WorkFlowUtils {
 		// System.out.println(task.toString());
 		// }
 		// }
-//		User user = UserManagement.getInstance().authenticate("ducdmk55",
-//				"ducdmk55@123");
+		// User user = UserManagement.getInstance().authenticate("ducdmk55",
+		// "ducdmk55@123");
 		ArrayList<Tool> toolList = wf.getToolList();
 		// ToolDAO toolDAO = DAOFactory.getDAOFactory(DAOFactory.MYSQL)
 		// .getToolDAO();

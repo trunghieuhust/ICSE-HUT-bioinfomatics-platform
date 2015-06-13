@@ -127,6 +127,67 @@ public class VMmanagement implements Closeable {
 		return vm;
 	}
 
+	public VM launchInstanceWithoutInitScript(String name, String image,
+			String flavor) {
+		int timeoutCounting = 0;
+		int readLogCount = 0;
+		String floatingIP;
+		String keypairName = user.getUsername();
+		CreateServerOptions options = CreateServerOptions.Builder.keyPairName(
+				keypairName).networks(
+				this.getNetworkId(CloudConfig.internalNetwork));
+		ServerApi serverApi = context.novaApi
+				.getServerApiForZone(context.defaultZone);
+		ServerCreated ser = serverApi.create(name, this.getImageId(image),
+				this.getFlavorId(flavor), options);
+		String serverID = ser.getId();
+
+		synchronized (LockObject.getInstance()) {
+			floatingIP = getOrCreateFloatingIP();
+			System.err.println("attaching IP " + floatingIP);
+
+			while (!attachIP(floatingIP, serverID)) {
+				if (timeoutCounting < 100) {
+					try {
+						if (checkServerStatus(serverID) == Status.ERROR) {
+							System.out.println("Build error.");
+							terminateInstancebyId(serverID);
+							return null;
+						}
+						Thread.sleep(500);
+						timeoutCounting++;
+					} catch (InterruptedException e) {
+						System.out
+								.println("Error when attaching floating IP.Terminated.");
+						terminateInstancebyId(serverID);
+						return null;
+					}
+				} else {
+					terminateInstancebyId(serverID);
+					System.out.println("Booting error.Terminated.");
+					return null;
+				}
+			}
+			System.err.println("IP attached.");
+		}
+		System.out.println("Waiting for complete booting");
+		while (!checkLogInstance(serverID)) {
+			if (readLogCount < 200) {
+				try {
+					Thread.sleep(500);
+					readLogCount++;
+				} catch (InterruptedException e) {
+					System.out.println("Error occured");
+					return null;
+				}
+			}
+		}
+
+		System.out.println("Boot complete, ready to go!");
+		VM vm = new VM(this.context, name, serverID, floatingIP);
+		return vm;
+	}
+
 	public boolean generateKeypair(String keypairName) {
 		KeyPairApi keypairApi = context.novaApi.getKeyPairExtensionForZone(
 				context.defaultZone).get();

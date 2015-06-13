@@ -10,6 +10,7 @@ public class Package {
 	private String userID;
 	private String packageLink;
 	private String Depends;
+	private boolean mainRepo;
 
 	public Package() {
 	}
@@ -50,6 +51,10 @@ public class Package {
 		return Depends;
 	}
 
+	public boolean isMainRepo() {
+		return mainRepo;
+	}
+
 	public void setArchitecture(String architecture) {
 		this.architecture = architecture;
 	}
@@ -86,12 +91,16 @@ public class Package {
 		Depends = depends;
 	}
 
+	public void setMainRepo(boolean mainRepo) {
+		this.mainRepo = mainRepo;
+	}
+
 	@Override
 	public String toString() {
 		return "\nPakage: " + getPackageName() + "\nVersion: " + getVersion()
 				+ "\nProvider: " + getProviders() + "\nArchitecture: "
 				+ getArchitecture() + "\nDepends: " + getDepends()
 				+ "\nInstalled-size: " + getInstalledSize() + "\nFlavor: "
-				+ getFlavor();
+				+ getFlavor() + "\nis main repo: " + mainRepo;
 	}
 }

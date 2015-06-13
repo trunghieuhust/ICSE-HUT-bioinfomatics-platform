@@ -125,6 +125,7 @@ public class StorageManagement implements Closeable {
 	 * @return Upload file to specified container
 	 */
 	public void uploadFileFromPath(String filePath, String container) {
+		createContainer(container);
 		ObjectApi objectApi = swiftApi
 				.getObjectApi(this.defaultZone, container);
 		ByteSource data = Files.asByteSource(new File(filePath));
@@ -133,7 +134,6 @@ public class StorageManagement implements Closeable {
 		objectApi.put(filePath, payload,
 				PutOptions.Builder.metadata(ImmutableMap.of("key1", "value1")));
 
-		System.out.println("  " + filePath);
 	}
 
 	public String uploadFileFromInputStream(DataHandler datahandler,

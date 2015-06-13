@@ -1,6 +1,9 @@
 package hust.icse.bio.tools;
 
+import java.util.List;
+
 import hust.icse.bio.dao.DAOFactory;
+import hust.icse.bio.dao.PackageDAO;
 import hust.icse.bio.infrastructure.CloudConfig;
 import hust.icse.bio.infrastructure.User;
 import hust.icse.bio.infrastructure.UserManagement;
@@ -9,27 +12,44 @@ import hust.icse.bio.infrastructure.VM;
 public class UbuntuDeployment extends Deployment {
 
 	@Override
-	public boolean deploy(Tool tool, VM vm) {
+	public boolean deploy(Tool tool, VM vm, User user) {
 		if (!isCommandAvailable(tool.getName(), vm)) {
 			// command not available. deploy
+			PackageDAO packageDAO = DAOFactory.getDAOFactory(DAOFactory.MYSQL)
+					.getPackageDAO();
+			List<Package> packs = packageDAO.getPackage(user,
+					tool.getPackageName(), tool.getVersion());
+			Package toolpack = null;
+			for (Package pack : packs) {
+				if (pack.isMainRepo() == false) {
+					toolpack = pack;
+					break;
+				} else {
+					toolpack = pack;
+				}
+			}
+			System.out.println(toolpack.toString());
 			// TODO get file from swift
-			System.out.println("T "
-					+ ToolManagement.getInstance().getPackageLink(tool));
+			System.out.println("get package from swift.");
 			String wget = "wget "
-					+ ToolManagement.getInstance().getPackageLink(tool);
-
+					+ ToolManagement.getInstance().getPackageLink(tool, user);
 			System.out.println(vm.executeCommand(wget));
 			// extract package
+			System.out.println("extracting...");
 			String extractResult = vm.executeCommand("tar -xf "
-					+ ToolManagement.getInstance().getPackageName(tool));
-			System.out.println(extractResult.trim().length());
+					+ ToolManagement.getInstance().getPackageName(tool)
+					+ ".bpm");
 			if (extractResult.trim().length() == 0) {
 				// no error, continue. Add binary file to PATH
+				System.out.println("No error. Copy binary file to /usr/");
 				String copyToBin = "sudo cp -R /home/ubuntu/"
 						+ ToolManagement.getInstance().getPackageName(tool)
 						+ "/bin /usr/";
-				System.out.println(copyToBin);
 				vm.executeCommand(copyToBin);
+				// install depends
+				String lib = vm.executeCommand("sudo apt-get install "
+						+ toolpack.getDepends() + " -y");
+				System.out.println(lib);
 				if (isCommandAvailable(tool.getName(), vm)) {
 					// command available. run post script
 					vm.executeCommand("bash /home/ubuntu/"
@@ -71,7 +91,7 @@ public class UbuntuDeployment extends Deployment {
 		Tool tool = DAOFactory.getDAOFactory(DAOFactory.MYSQL).getToolDAO()
 				.getTool(user, "clustal");
 		Deployment UbuntuDeployment = Deployment.getDeployment(UBUNTU);
-		boolean result = UbuntuDeployment.deploy(tool, vm);
+		boolean result = UbuntuDeployment.deploy(tool, vm, user);
 		System.out.println(result);
 		// user.getManager().terminateInstance(vm);
 	}

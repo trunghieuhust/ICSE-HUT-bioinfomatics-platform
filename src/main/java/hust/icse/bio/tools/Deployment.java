@@ -1,5 +1,6 @@
 package hust.icse.bio.tools;
 
+import hust.icse.bio.infrastructure.User;
 import hust.icse.bio.infrastructure.VM;
 
 public abstract class Deployment {
@@ -14,7 +15,7 @@ public abstract class Deployment {
 		}
 	}
 
-	public abstract boolean deploy(Tool tool, VM vm);
+	public abstract boolean deploy(Tool tool, VM vm, User user);
 
 	public abstract boolean isCommandAvailable(String command, VM vm);
 }

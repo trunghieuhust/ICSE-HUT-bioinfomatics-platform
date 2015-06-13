@@ -1,5 +1,7 @@
 package hust.icse.bio.service;
 
+import hust.icse.bio.dao.DAOFactory;
+import hust.icse.bio.dao.StatiticsDAO;
 import hust.icse.bio.infrastructure.User;
 import hust.icse.bio.infrastructure.UserManagement;
 import hust.icse.bio.tools.ToolManagement;
@@ -151,7 +153,7 @@ public class HandlerRequest {
 		User user = getUser(username, password);
 		if (user != null) {
 			DataHandler handler = toolPackage.getHandler();
-			File toolpack = new java.io.File("/tmp/" + toolPackage.getName());
+			File toolpack = new java.io.File(toolPackage.getName());
 			try {
 				InputStream is = handler.getInputStream();
 
@@ -168,7 +170,8 @@ public class HandlerRequest {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-			return ToolManagement.getInstance().addToolPackage(toolpack, user);
+			return ToolManagement.getInstance().addToolPackage(
+					toolPackage.getName(), user);
 		} else {
 			return false;
 		}
@@ -186,6 +189,17 @@ public class HandlerRequest {
 				System.out.println("\t" + file.getName() + " "
 						+ file.getBytes());
 			}
+		}
+	}
+
+	public List<Statitics> getStatitics(String username, String password) {
+		User user = getUser(username, password);
+		if (user != null) {
+			StatiticsDAO statiticsDAO = DAOFactory.getDAOFactory(
+					DAOFactory.MYSQL).getStatiticsDAO();
+			return statiticsDAO.getStatitics(user);
+		} else {
+			return null;
 		}
 	}
 }

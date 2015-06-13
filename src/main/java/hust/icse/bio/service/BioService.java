@@ -74,4 +74,9 @@ public interface BioService {
 			@WebParam(name = "username") String username,
 			@WebParam(name = "password") String password,
 			@WebParam(name = "toolPackage") FileUploader toolPackage);
+
+	@WebMethod
+	public List<Statitics> getStatitics(
+			@WebParam(name = "username") String username,
+			@WebParam(name = "password") String password);
 }
