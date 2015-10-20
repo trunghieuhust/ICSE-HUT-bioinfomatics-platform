@@ -1,0 +1,7 @@
+Package: clustalo
+Version: 1.2.1
+Provider: clustalo
+Architecture: i386 amd64 
+Depends: libargtable2-0
+Installed-size: 1867417
+Flavor: tiny:{CPU=1,RAM=512,HDD=10} small:{CPU=1,RAM=1024,HDD=10} medium:{CPU=2,RAM=1024,HDD=10} large:{CPU=4,RAM=2048,HDD=10}
